@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "278425989544",
+    "project_id": "bike-health-monitor",
+    "storage_bucket": "bike-health-monitor.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:278425989544:android:c528c84273338bab2ced9d",
+        "android_client_info": {
+          "package_name": "com.radheshyam.bikehealthmonitor"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_kFbYqeCAb6xkF7Isw3F7GLOGy1dDwIM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
