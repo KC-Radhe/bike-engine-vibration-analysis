@@ -13,7 +13,7 @@ function RootNavigator() {
       if (user) {
         router.replace('/(tabs)/home');
       } else {
-        router.replace('/(auth)/register');
+        router.replace('/(auth)/login');
       };
     };
   }, [user, loading]);
@@ -28,7 +28,7 @@ function RootNavigator() {
 
   return (
     <Stack screenOptions={{ headerShown: false}} >
-      {/* <Stack.Screen name="(auth)/login" /> */}
+      <Stack.Screen name="(auth)/login" />
       <Stack.Screen name="(auth)/register" />
       <Stack.Screen name="(tabs)/home" />
       <Stack.Screen name="+not-found" />
