@@ -37,8 +37,8 @@ export default function LoginScreen() {
             <View style={styles.content} >
                 <View style={styles.header} >
                     <Activity size={48} color='#2563eb' strokeWidth={2} />
-                    <Text style={styles.title}>Bike Health Monitor</Text>
-                    <Text style={styles.subtitle}>Monitor your engine`s vitals</Text>
+                    <Text style={styles.title}>Vibra Feel</Text>
+                    <Text style={styles.subtitle}>Feel The Vibration, Protect The Ride</Text>
                 </View>
 
                 <View style={styles.form} >
