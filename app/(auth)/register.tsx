@@ -35,7 +35,7 @@ export default function RegisterScreen() {
             Alert.alert('Registration Failed!!', error.message);
             setLoading(false);
         } else {
-            router.replace('/(tabs)/home');
+            router.replace('/(tabs)/index');
         };
     };
 

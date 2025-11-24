@@ -11,7 +11,7 @@ function RootNavigator() {
   useEffect( () => {
     if(!loading) {
       if (user) {
-        router.replace('/(tabs)/home');
+        router.replace('/(tabs)/');
       } else {
         router.replace('/(auth)/login');
       };
@@ -30,7 +30,7 @@ function RootNavigator() {
     <Stack screenOptions={{ headerShown: false}} >
       <Stack.Screen name="(auth)/login" />
       <Stack.Screen name="(auth)/register" />
-      <Stack.Screen name="(tabs)/home" />
+      <Stack.Screen name="(tabs)" />
       <Stack.Screen name="+not-found" />
     </Stack>
   )
