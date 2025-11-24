@@ -11,4 +11,9 @@ LEARNING)
 ---
 
 #### ✨ Features
-- 🔐 User authentication: Secure registration and sign-in with Firebase
+- 🔐 **User authentication:** Secure registration and sign-in with Firebase
+
+
+#### 🛠️ Tech Stack
+- **Frontend:** React Native (Expo), TypeScript
+- **Backend:** Firebase (Auth, Firestore, Cloud Functions)
