@@ -8,7 +8,7 @@ import { useAuth } from "../../contexts/AuthContext";
 export default function DashboardScreen() {
     const { signOut } = useAuth();
     const [refreshing, setRefreshing] = useState(false);
-    const [status, setStatus] = useState<string>('');
+    const [status, setStatus] = useState<string>('Healthy');
 
     const onRefresh = async () => {
         setRefreshing(true);

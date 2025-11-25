@@ -12,8 +12,9 @@ LEARNING)
 
 #### ✨ Features
 - 🔐 **User authentication:** Secure registration and sign-in with Firebase
-
+- **Dashboard:** Visualize vibration graphs, health status, and faults
 
 #### 🛠️ Tech Stack
 - **Frontend:** React Native (Expo), TypeScript
 - **Backend:** Firebase (Auth, Firestore, Cloud Functions)
+
