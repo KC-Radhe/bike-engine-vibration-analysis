@@ -1,8 +1,9 @@
 import { router } from "expo-router";
 import { Activity } from 'lucide-react-native';
 import { useState } from "react";
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useAuth } from "../../contexts/AuthContext";
+import toastNotification from "../../lib/toastNotification";
 
 
 export default function RegisterScreen() {
@@ -15,27 +16,29 @@ export default function RegisterScreen() {
 
     const handleRegister = async () => {
         if (!fullName || !email || !password || !confirmPassword) {
-            Alert.alert('Error', 'Please fill in all fields');
+            toastNotification('error', 'Empty Credentials!!', 'Fill all the fields');
             return;
         };
 
         if ( password !== confirmPassword) {
-            Alert.alert('Error', 'Passwords do not match');
+            toastNotification('error', 'Registraion Failed!!','Passwords do not match');
             return;
         };
 
         if (password.length < 6) {
-            Alert.alert('Error', 'Password must be at least 6 characters');
+            toastNotification('warning', 'Weak Password!!', 'Password must be at least 6 characters');
             return;
         };
 
         setLoading(true);
         const { error } = await signUp(email, password, fullName);
         if (error) {
-            Alert.alert('Registration Failed!!', error.message);
+            const errorMessage = error.message.split('/')[1].replace(').', '').toUpperCase();
+            toastNotification('error', 'Registraion Failed!!', errorMessage);
             setLoading(false);
         } else {
-            router.replace('/(tabs)/index');
+            router.replace('/(tabs)');
+            toastNotification('success', 'Login Successful', 'Welcome back!');
         };
     };
 

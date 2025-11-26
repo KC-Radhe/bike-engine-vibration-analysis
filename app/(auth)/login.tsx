@@ -1,8 +1,9 @@
 import { router } from "expo-router";
 import { Activity } from "lucide-react-native";
 import { useState } from "react";
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useAuth } from "../../contexts/AuthContext";
+import toastNotification from "../../lib/toastNotification";
 
 
 export default function LoginScreen() {
@@ -13,25 +14,25 @@ export default function LoginScreen() {
 
     const handleLogin = async () => {
         if (!email || !password) {
-            Alert.alert('Error', 'Please enter email and password');
+           toastNotification('error', 'Empty Credentials!!', 'Enter Email and Password');
             return;
         };
 
         setLoading(true);
 
         const { error } = await signIn(email, password);
-
         if (error) {
-            Alert.alert('Login Failed', error.message);
+            const errorMessage = error.message.split('/')[1].replace(').', '').toUpperCase();
+            toastNotification('error', 'Login Failed!', errorMessage)
             setLoading(false);
         } else {
-            router.replace('/(tabs)/');
+            router.replace('/(tabs)');
+            toastNotification('success', 'Login Successful', 'Welcome Back!');
         };
     };
 
     return (
         <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.container}
          >
             <View style={styles.content} >
