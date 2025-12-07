@@ -1,0 +1,161 @@
+import { addDoc, collection, doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import { db } from "../lib/firebase";
+import { HealthSummary } from "../types/database";
+
+
+export class FirestoreService {
+
+    static async saveVibrationLog(
+        userId: string,
+        data: {
+            vibrationX: number;
+            vibrationY: number;
+            vibrationZ: number;
+            frequency: number;
+        }
+    ): Promise<{ 
+        success: boolean;
+        logId?: string;
+        error?: string;
+    }> {
+        try {
+            const magnitude = Math.sqrt(
+                data.vibrationX ** 2 +
+                data.vibrationY ** 2 +
+                data.vibrationZ ** 2
+            );
+
+            let healthStatus: string;
+            let confidenceLevel: number;
+
+            if (magnitude < 2 && data.frequency < 50) {
+                healthStatus = 'healthy';
+                confidenceLevel = 95 + Math.random() * 5;
+            } else if (magnitude < 4 && data.frequency < 70) {
+                healthStatus = 'warning';
+                confidenceLevel = 75 + Math.random() * 15;
+            } else {
+                healthStatus = 'faulty';
+                confidenceLevel = 85 + Math.random() * 15;
+            }
+
+            const vibrationLogRef = await addDoc(collection(db, 'vibratinLogs'), {
+                timestamp: serverTimestamp(),
+                userId,
+                vibrationX: data.vibrationX,
+                vibrationY: data.vibrationY,
+                vibrationZ: data.vibrationZ,
+                frequency: data.frequency,
+                healthStatus,
+                confidenceLevel,
+                createdAt: serverTimestamp(),
+            });
+
+            //update engine health summary
+            await this.updateHealthSummary(userId, {
+                magnitude,
+                frequency: data.frequency,
+                healthStatus,
+            });
+
+
+            return { success: true, logId: vibrationLogRef.id };
+        } catch (error) {
+            console.error( `Error on saving vibration log: ${error}`);
+            return { success: false, error: error.message }
+        }
+    };
+
+    private static async updateHealthSummary(
+        userId: string,
+        data: {
+            magnitude: number,
+            frequency: number,
+            healthStatus: string,
+        }
+    ): Promise<void> {
+        const today = new Date().toISOString().split('T')[0];
+        const healthSummaryRef = doc(db, 'healthSummaries', `${userId}_${today}`);
+
+        const healthSummaryDoc = await getDoc(healthSummaryRef);
+
+        if (!healthSummaryDoc.exists()) {
+            const initialHealthLevel = data.healthStatus === 'healthy'? 100 :
+            data.healthStatus === 'warning'? 80 : 40;
+            
+            await setDoc(healthSummaryRef, {
+                userId,
+                date: today,
+                totalReadings: 1,
+                healthyCount: data.healthStatus === 'healthy'? 1 : 0,
+                warningCount: data.healthStatus === 'warning'? 1 : 0,
+                faultyCount: data.healthStatus === 'faulty'? 1 : 0,
+                avgVibration: data.magnitude,
+                maxVibration: data.magnitude,
+                overallHealthLevel: initialHealthLevel,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            });
+            return;
+        };
+
+        const oldHealthSummary = healthSummaryDoc.data();
+
+        const newTotalReadings = oldHealthSummary.totalReadings + 1;
+        const newHealthyCount = oldHealthSummary.healthyCount + (data.healthStatus === 'healthy'? 1 : 0);
+        const newWarningCount = oldHealthSummary.warningCount + (data.healthStatus === 'warning'? 1 : 0);
+        const newFaultyCount = oldHealthSummary.faultyCount + (data.healthStatus === 'faulty'? 1 : 0);
+
+        const newAvgVibration = (oldHealthSummary.avgVibration * oldHealthSummary.totalReadings + data.magnitude) / newTotalReadings;
+        const newMaxVibration = Math.max(oldHealthSummary.maxVibration, data.magnitude);
+
+        const healthyPercentage = (newHealthyCount / newTotalReadings) * 100;
+        const warningPenalty = (newWarningCount / newTotalReadings) * 20;
+        const faultyPenalty = (newFaultyCount / newTotalReadings) * 60;
+        const newHealthLevel = Math.max(0, healthyPercentage - warningPenalty - faultyPenalty);
+        //warning are concerning: -20% & faults are critical: -60%
+
+        await updateDoc(healthSummaryRef, {
+            totalReadings: newTotalReadings,
+            healthyCount: newHealthyCount,
+            warningCount: newWarningCount,
+            faultyCount: newFaultyCount,
+            avgVibration: newAvgVibration,
+            maxVibration: newMaxVibration,
+            overallHealthLevel: newHealthLevel,
+            updatedAt: serverTimestamp(),
+        });
+        return;        
+    };
+
+    static async getTodayHealthSummary(userId: string): Promise<HealthSummary> | null {
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const healthSummaryRef = doc(db, 'healthSummaries', `${userId}_${today}`);
+            const healthSummaryDoc = await getDoc(healthSummaryRef);
+
+            if (!healthSummaryDoc.exists()) return null;
+            const data = healthSummaryDoc.data();
+            return {
+                id: healthSummaryDoc.id,
+                userId: data.userId,
+                date: data.date,
+                totalReadings: data.totalReadings,
+                healthyCount: data.healthyCount,
+                warningCount: data.warningCount,
+                faultyCount: data.faultyCount,
+                avgVibration: data.avgVibration,
+                maxVibration: data.maxVibration,
+                avgFrequency: data.avgFrequency,
+                overallHealthLevel: data.overallHealthLevel,
+                createdAt: data.createdAt?.toDate(),
+                updatedAt: data.updatedAt?.toDate(),
+            };
+        } catch (error) {
+            console.error('Error getting health summary: ', error);
+            return null;
+        };
+    };
+
+
+}
