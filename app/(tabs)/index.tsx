@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { SimulatorButton } from "../../components/SimulatorButton";
 import { useAuth } from "../../contexts/AuthContext";
 import { FirestoreService } from "../../services/firestoreService";
-import { HealthSummary } from "../../types/database";
+import { HealthSummary, VibrationLog } from "../../types/database";
 
 
 export default function DashboardScreen() {
@@ -13,13 +13,18 @@ export default function DashboardScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [loading, setLoading] = useState(true);
     const [healthSummary, setHealthSummary] = useState<HealthSummary | null>(null);
+    const [latestLog, setLatestLog] = useState<VibrationLog | null>(null);
 
     const loadData = useCallback( async () => {
         if (!user) return;
 
         try {
-            const summary = await FirestoreService.getTodayHealthSummary(user.uid);
+            const [summary, log] = await Promise.all([
+                FirestoreService.getTodayHealthSummary(user.uid),
+                FirestoreService.getLatestVibrationLog(user.uid),
+            ]);
             setHealthSummary(summary);
+            setLatestLog(log);
         } catch (error) {
             console.error('Error loading dashboad data: ', error);
         } finally {
@@ -73,7 +78,7 @@ export default function DashboardScreen() {
         )
     };
 
-    const currentStatus = 'healthy';
+    const currentStatus = latestLog?.healthStatus || 'healthy';
     const statusColor = getStatusColor(currentStatus);
     
     return (
@@ -94,7 +99,7 @@ export default function DashboardScreen() {
                     <RefreshControl refreshing={refreshing} onRefresh={onRefresh}  />
                 }
              >
-                <View style={styles.statusCard}>
+                <View style={[styles.statusCard, {backgroundColor: statusColor.bg }]}>
                     <View style={styles.statusHeader}>
                         <Text style={styles.statusTitle}>Current Status</Text>
                         <View style={[styles.statusBadge, { backgroundColor: statusColor.bg }, ]}>
@@ -105,33 +110,80 @@ export default function DashboardScreen() {
                         </View>
                     </View>
                     <Text style={styles.statusDescription}>
-                        {/* TODO: change description acc to status */}
-                        No readings yet - Start Monitoring
+                        {latestLog? (
+                            <>
+                                Last readings: {' '}
+                                <Text style={styles.metricValue}>
+                                    {latestLog.magnitude.toFixed(2)}m/s²
+                                </Text> {' '}
+                                at{' '} 
+                                <Text style={styles.metricValue}>
+                                    {latestLog.frequency.toFixed(2)}Hz
+                                </Text>
+                            </>
+                        ) :
+                            `No readings yet - Start Monitoring`
+                        }
                     </Text>
+                    {latestLog && (
+                        <Text style={styles.statusTimestamp} >
+                            {new Date(latestLog.timestamp).toLocaleString()}
+                        </Text>
+                    )}
                 </View>
 
-                {/* todays overview */}
-                {healthSummary && (
-                    <View style={styles.section} >
-                        <Text style={styles.sectionTitle}>Today`s Overview</Text>
-                        <View style={styles.overviewGrid} >
-                            <View style={styles.overviewItem} >
-                                <View style={[styles.overviewDot, { backgroundColor: '#10b981'}]} />
-                                <Text style={styles.overviewLabel} >Healthy</Text>
-                                <Text style={styles.overviewValue}> {healthSummary.healthyCount} </Text>
+                {latestLog? (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Latest Metrics</Text>
+                        <View style={styles.metricsGrid} >
+                            <View style={styles.metricItem} >
+                                <Text style={styles.metricLabel}>Vibration X</Text>
+                                <Text style={styles.metricValue} >
+                                    {latestLog.vibrationX.toFixed(3)}m/s²
+                                </Text>
                             </View>
-                            <View style={styles.overviewItem} >
-                                <View style={[styles.overviewDot, { backgroundColor: '#f59e0b'}]} />
-                                <Text style={styles.overviewLabel} >Warning</Text>
-                                <Text style={styles.overviewValue}> {healthSummary.warningCount} </Text>
+                            <View style={styles.metricItem} >
+                                <Text style={styles.metricLabel}>Vibration Y</Text>
+                                <Text style={styles.metricValue} >
+                                    {latestLog.vibrationY.toFixed(3)}m/s²
+                                </Text>
                             </View>
-                            <View style={styles.overviewItem} >
-                                <View style={[styles.overviewDot, { backgroundColor: '#ef4444'}]} />
-                                <Text style={styles.overviewLabel} >Faulty</Text>
-                                <Text style={styles.overviewValue}> {healthSummary.faultyCount} </Text>
+                            <View style={styles.metricItem} >
+                                <Text style={styles.metricLabel}>Vibration Z</Text>
+                                <Text style={styles.metricValue} >
+                                    {latestLog.vibrationZ.toFixed(3)}m/s²
+                                </Text>
+                            </View>
+                            <View style={styles.metricItem} >
+                                <Text style={styles.metricLabel}>Magnitude</Text>
+                                <Text style={styles.metricValue} >
+                                    {latestLog.magnitude.toFixed(3)}m/s²
+                                </Text>
+                            </View>
+                            <View style={styles.metricItem} >
+                                <Text style={styles.metricLabel}>Frequency</Text>
+                                <Text style={styles.metricValue} >
+                                    {latestLog.frequency.toFixed(1)}Hz
+                                </Text>
+                            </View>
+                            <View style={styles.metricItem} >
+                                <Text style={styles.metricLabel}>Confidence</Text>
+                                <Text style={styles.metricValue} >
+                                    {latestLog.confidenceLevel.toFixed(1)}%
+                                </Text>
                             </View>
                         </View>
-
+                    </View>
+                ) : (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Latest Metrics</Text>
+                        <View style={styles.emptyState}>
+                            <RefreshCw size={48} color='#cbd5e1' strokeWidth={1.5} />
+                            <Text style={styles.emptyStateText}>No data available</Text>
+                            <Text style={styles.emptyStateSubtext}>
+                                Start monitoring to see engine health metrics
+                            </Text>
+                        </View>
                     </View>
                 )}
 
@@ -162,16 +214,30 @@ export default function DashboardScreen() {
                     </View>
                 </View>
 
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Latest Metrics</Text>
-                    <View style={styles.emptyState}>
-                        <RefreshCw size={48} color='#cbd5e1' strokeWidth={1.5} />
-                        <Text style={styles.emptyStateText}>No data available</Text>
-                        <Text style={styles.emptyStateSubtext}>
-                            Start monitoring to see engine health metrics
-                        </Text>
+                {/* todays overview */}
+                {healthSummary && (
+                    <View style={styles.section} >
+                        <Text style={styles.sectionTitle}>Today`s Overview</Text>
+                        <View style={styles.overviewGrid} >
+                            <View style={styles.overviewItem} >
+                                <View style={[styles.overviewDot, { backgroundColor: '#10b981'}]} />
+                                <Text style={styles.overviewLabel} >Healthy</Text>
+                                <Text style={styles.overviewValue}> {healthSummary.healthyCount} </Text>
+                            </View>
+                            <View style={styles.overviewItem} >
+                                <View style={[styles.overviewDot, { backgroundColor: '#f59e0b'}]} />
+                                <Text style={styles.overviewLabel} >Warning</Text>
+                                <Text style={styles.overviewValue}> {healthSummary.warningCount} </Text>
+                            </View>
+                            <View style={styles.overviewItem} >
+                                <View style={[styles.overviewDot, { backgroundColor: '#ef4444'}]} />
+                                <Text style={styles.overviewLabel} >Faulty</Text>
+                                <Text style={styles.overviewValue}> {healthSummary.faultyCount} </Text>
+                            </View>
+                        </View>
+
                     </View>
-                </View>
+                )}
 
             </ScrollView>
             <SimulatorButton onDataSent={loadData} />
@@ -332,6 +398,34 @@ const styles = StyleSheet.create({
     overviewValue: {
         fontSize: 20,
         fontWeight: '700', 
+        color: '#1e293b',
+    },
+    statusTimestamp: {
+        fontSize: 12,
+        color: '#94a3b8',
+        marginTop: 4,
+    },
+    metricsGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 12,
+    },
+    metricItem: {
+        flex: 1,
+        minWidth: '45%',
+        padding: 12,
+        backgroundColor: '#f8fafc',
+        borderRadius: 8,
+    },
+    metricLabel: {
+        fontSize: 12,
+        fontWeight: '500',
+        color: '#64748b',
+        marginBottom: 4,
+    },
+    metricValue: {
+        fontSize: 16,
+        fontWeight: '600',
         color: '#1e293b',
     },
 });

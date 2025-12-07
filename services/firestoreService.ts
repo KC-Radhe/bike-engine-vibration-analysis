@@ -1,6 +1,6 @@
-import { addDoc, collection, doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, getDocs, limit, orderBy, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { HealthSummary } from "../types/database";
+import { HealthSummary, VibrationLog } from "../types/database";
 
 
 export class FirestoreService {
@@ -45,6 +45,7 @@ export class FirestoreService {
                 vibrationX: data.vibrationX,
                 vibrationY: data.vibrationY,
                 vibrationZ: data.vibrationZ,
+                magnitude,
                 frequency: data.frequency,
                 healthStatus,
                 confidenceLevel,
@@ -156,6 +157,39 @@ export class FirestoreService {
             };
         } catch (error) {
             console.error('Error getting health summary: ', error);
+            return null;
+        };
+    };
+
+    
+    static async getLatestVibrationLog(userId: string): Promise<VibrationLog | null> {
+        try {
+            const queryObj = query(
+                collection(db, 'vibrationLogs'),
+                where('userId', '==', userId),
+                orderBy('timestamp', 'desc'),
+                limit(1)
+            );
+
+            const querySnapshot = await getDocs(queryObj);
+            if (querySnapshot.empty) return null;
+            const latestVibration = querySnapshot.docs[0];
+            const data = latestVibration.data();
+            return {
+                id: latestVibration.id,
+                userId: data.userId,
+                timestamp: data.timestamp?.toDate(),
+                vibrationX: data.vibrationX,
+                vibrationY: data.vibrationY,
+                vibrationZ: data.vibrationZ,
+                magnitude: data.magnitude,
+                frequency: data.frequency,
+                healthStatus: data.healthStatus,
+                confidenceLevel: data.confidenceLevel,
+                createdAt: data.createdAt?.toDate(),
+            };
+        } catch (error) {
+            console.error('Error getting latest vibration log: ', error);
             return null;
         };
     };

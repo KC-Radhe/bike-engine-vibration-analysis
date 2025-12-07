@@ -22,3 +22,17 @@ export interface HealthSummary {
     createdAt: Date;
     updatedAt: Date;
 }
+
+export interface VibrationLog {
+    id: string;
+    userId: string;
+    timestamp: Date;
+    vibrationX: number;
+    vibrationY: number;
+    vibrationZ: number;
+    magnitude: number;
+    frequency: number;
+    healthStatus: string;
+    confidenceLevel: number;
+    createdAt: Date;
+}
