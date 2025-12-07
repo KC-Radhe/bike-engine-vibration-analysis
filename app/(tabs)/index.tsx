@@ -1,22 +1,80 @@
-import { LogOut, RefreshCw } from "lucide-react-native";
-import { useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { AlertTriangle, CheckCircle2, LogOut, RefreshCw } from "lucide-react-native";
+import { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { SimulatorButton } from "../../components/SimulatorButton";
 import { useAuth } from "../../contexts/AuthContext";
+import { FirestoreService } from "../../services/firestoreService";
+import { HealthSummary } from "../../types/database";
 
 
 export default function DashboardScreen() {
-    const { signOut } = useAuth();
+    const { signOut, user } = useAuth();
     const [refreshing, setRefreshing] = useState(false);
-    const [status, setStatus] = useState<string>('Healthy');
+    const [loading, setLoading] = useState(true);
+    const [healthSummary, setHealthSummary] = useState<HealthSummary | null>(null);
+
+    const loadData = useCallback( async () => {
+        if (!user) return;
+
+        try {
+            const summary = await FirestoreService.getTodayHealthSummary(user.uid);
+            setHealthSummary(summary);
+        } catch (error) {
+            console.error('Error loading dashboad data: ', error);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    }, [user]);
+
+    useEffect( () => {
+        loadData();
+    }, [loadData]);
 
     const onRefresh = async () => {
         setRefreshing(true);
-        //TODO: fetch data to show on dashboard
-        setTimeout( () => setRefreshing(false), 3000);
-        //TODO: check the vibration and then set status
-        setStatus('Healthy');
+        await loadData();
     };
+    
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'healthy': 
+                return { bg: '#dcfce7', text: '#16a34a' };
+            case 'warning':
+                return { bg: '#fef3c7', text: '#d97706' };
+            case 'faulty': 
+                return { bg: '#fee2e2', text: '#dc2626' };
+            default: 
+                return { bg: '#e2e8f0', text: '#64748b' };
+        }
+    };
+
+    const getStatusIcon = (status: string) => {
+        switch (status) {
+            case 'healthy':
+                return <CheckCircle2 size={20} color='#16a34a' strokeWidth={2} />;
+            case 'warning':
+                return <AlertTriangle size={20} color='#d97706' strokeWidth={2} />;
+            case 'faulty':
+                return <AlertTriangle size={20} color='#dc2626' strokeWidth={2} />;
+            default:
+                return <RefreshCw size={20} color='#64748b' strokeWidth={2} />;
+        }
+    };
+
+    if (loading) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={styles.loadingContainer} >
+                    <ActivityIndicator size='large' color='#2563eb' />
+                </View>
+            </SafeAreaView>
+        )
+    };
+
+    const currentStatus = 'healthy';
+    const statusColor = getStatusColor(currentStatus);
     
     return (
         <SafeAreaView style={styles.container}>
@@ -39,32 +97,68 @@ export default function DashboardScreen() {
                 <View style={styles.statusCard}>
                     <View style={styles.statusHeader}>
                         <Text style={styles.statusTitle}>Current Status</Text>
-                        <View style={[styles.statusBadge, styles.statusHealthy, ]}>
-                            <Text style={styles.statusBadgeText}>{status}</Text>
+                        <View style={[styles.statusBadge, { backgroundColor: statusColor.bg }, ]}>
+                            {getStatusIcon(currentStatus)}
+                            <Text style={[styles.statusBadgeText, { color: statusColor.text }, ]}>
+                                {currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}
+                            </Text>
                         </View>
                     </View>
                     <Text style={styles.statusDescription}>
                         {/* TODO: change description acc to status */}
-                        All systems operating normally
+                        No readings yet - Start Monitoring
                     </Text>
                 </View>
+
+                {/* todays overview */}
+                {healthSummary && (
+                    <View style={styles.section} >
+                        <Text style={styles.sectionTitle}>Today`s Overview</Text>
+                        <View style={styles.overviewGrid} >
+                            <View style={styles.overviewItem} >
+                                <View style={[styles.overviewDot, { backgroundColor: '#10b981'}]} />
+                                <Text style={styles.overviewLabel} >Healthy</Text>
+                                <Text style={styles.overviewValue}> {healthSummary.healthyCount} </Text>
+                            </View>
+                            <View style={styles.overviewItem} >
+                                <View style={[styles.overviewDot, { backgroundColor: '#f59e0b'}]} />
+                                <Text style={styles.overviewLabel} >Warning</Text>
+                                <Text style={styles.overviewValue}> {healthSummary.warningCount} </Text>
+                            </View>
+                            <View style={styles.overviewItem} >
+                                <View style={[styles.overviewDot, { backgroundColor: '#ef4444'}]} />
+                                <Text style={styles.overviewLabel} >Faulty</Text>
+                                <Text style={styles.overviewValue}> {healthSummary.faultyCount} </Text>
+                            </View>
+                        </View>
+
+                    </View>
+                )}
 
                 <View style={styles.statsGrid}>
                     <View style={styles.statCard}>
                         <Text style={styles.statLabel}>Total Readings</Text>
-                        <Text style={styles.statValue}>0</Text>
+                        <Text style={styles.statValue}>
+                            {healthSummary?.totalReadings || 0}
+                        </Text>
                     </View>
                     <View style={styles.statCard}>
                         <Text style={styles.statLabel}>Health Score</Text>
-                        <Text style={styles.statValue}>0%</Text>
+                        <Text style={styles.statValue}>
+                            {healthSummary?.overallHealthLevel.toFixed(0) || 0}%
+                        </Text>
                     </View>
                     <View style={styles.statCard}>
                         <Text style={styles.statLabel}>Avg Vibration</Text>
-                        <Text style={styles.statValue}>0 m/s²</Text>
+                        <Text style={styles.statValue}> 
+                            {healthSummary?.avgVibration.toFixed(2) || '0.00'}m/s²
+                        </Text>
                     </View>
                     <View style={styles.statCard}>
-                        <Text style={styles.statLabel}>Avg Temperature</Text>
-                        <Text style={styles.statValue}>0°C</Text>
+                        <Text style={styles.statLabel}>Avg Frequency</Text>
+                        <Text style={styles.statValue}>
+                            {healthSummary?.avgFrequency.toFixed(2) || '0.00'}Hz
+                        </Text>
                     </View>
                 </View>
 
@@ -78,7 +172,9 @@ export default function DashboardScreen() {
                         </Text>
                     </View>
                 </View>
+
             </ScrollView>
+            <SimulatorButton onDataSent={loadData} />
         </SafeAreaView>
     )
 }
@@ -140,6 +236,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 15,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
     },
     statusHealthy: {
         backgroundColor: '#dcfcdc',
@@ -206,5 +305,33 @@ const styles = StyleSheet.create({
         color: '#94a3b8',
         marginTop: 8,
         textAlign: 'center',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+     overviewGrid: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+    },
+    overviewItem: {
+        alignItems: 'center',
+    },
+    overviewDot: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        marginBottom: 8,
+    },
+    overviewLabel: {
+        fontSize: 12,
+        color: '#64748b',
+        marginBottom: 4,
+    },
+    overviewValue: {
+        fontSize: 20,
+        fontWeight: '700', 
+        color: '#1e293b',
     },
 });

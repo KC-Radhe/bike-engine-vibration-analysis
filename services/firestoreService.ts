@@ -39,7 +39,7 @@ export class FirestoreService {
                 confidenceLevel = 85 + Math.random() * 15;
             }
 
-            const vibrationLogRef = await addDoc(collection(db, 'vibratinLogs'), {
+            const vibrationLogRef = await addDoc(collection(db, 'vibrationLogs'), {
                 timestamp: serverTimestamp(),
                 userId,
                 vibrationX: data.vibrationX,
@@ -80,8 +80,8 @@ export class FirestoreService {
         const healthSummaryDoc = await getDoc(healthSummaryRef);
 
         if (!healthSummaryDoc.exists()) {
-            const initialHealthLevel = data.healthStatus === 'healthy'? 100 :
-            data.healthStatus === 'warning'? 80 : 40;
+            const initialHealthLevel = data.healthStatus === 'healthy'? 100.0 :
+            data.healthStatus === 'warning'? 80.0 : 40.0;
             
             await setDoc(healthSummaryRef, {
                 userId,
@@ -92,6 +92,7 @@ export class FirestoreService {
                 faultyCount: data.healthStatus === 'faulty'? 1 : 0,
                 avgVibration: data.magnitude,
                 maxVibration: data.magnitude,
+                avgFrequency: data.frequency,
                 overallHealthLevel: initialHealthLevel,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
@@ -108,6 +109,7 @@ export class FirestoreService {
 
         const newAvgVibration = (oldHealthSummary.avgVibration * oldHealthSummary.totalReadings + data.magnitude) / newTotalReadings;
         const newMaxVibration = Math.max(oldHealthSummary.maxVibration, data.magnitude);
+        const newAvgFrequency = (oldHealthSummary.avgFrequency * oldHealthSummary.totalReadings + data.frequency) / newTotalReadings;
 
         const healthyPercentage = (newHealthyCount / newTotalReadings) * 100;
         const warningPenalty = (newWarningCount / newTotalReadings) * 20;
@@ -122,6 +124,7 @@ export class FirestoreService {
             faultyCount: newFaultyCount,
             avgVibration: newAvgVibration,
             maxVibration: newMaxVibration,
+            avgFrequency: newAvgFrequency,
             overallHealthLevel: newHealthLevel,
             updatedAt: serverTimestamp(),
         });
