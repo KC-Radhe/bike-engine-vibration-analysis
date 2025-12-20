@@ -1,3 +1,6 @@
+export type AlertType = 'fault_detected' | 'high_vibration' | 'critical';
+export type Severity = 'medium' | 'high' | 'critical';
+
 export interface Profile {
     id: string;
     email: string;
@@ -34,5 +37,18 @@ export interface VibrationLog {
     frequency: number;
     healthStatus: string;
     confidenceLevel: number;
+    createdAt: Date;
+}
+
+export interface Alert {
+    id: string;
+    userId: string;
+    alertType: AlertType;
+    severity: Severity;
+    title: string;
+    message: string;
+    vibraionLogId: string | null;
+    isRead: boolean;
+    isDismissed: boolean;
     createdAt: Date;
 }

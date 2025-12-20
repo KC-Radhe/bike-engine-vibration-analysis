@@ -1,6 +1,6 @@
 import { addDoc, collection, doc, getDoc, getDocs, limit, orderBy, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { HealthSummary, VibrationLog } from "../types/database";
+import { Alert, HealthSummary, VibrationLog } from "../types/database";
 
 
 export class FirestoreService {
@@ -28,10 +28,10 @@ export class FirestoreService {
             let healthStatus: string;
             let confidenceLevel: number;
 
-            if (magnitude < 2 && data.frequency < 50) {
+            if (magnitude < 3.5 && data.frequency < 35) {
                 healthStatus = 'healthy';
                 confidenceLevel = 95 + Math.random() * 5;
-            } else if (magnitude < 4 && data.frequency < 70) {
+            } else if (magnitude < 8.5 && data.frequency < 70) {
                 healthStatus = 'warning';
                 confidenceLevel = 75 + Math.random() * 15;
             } else {
@@ -59,6 +59,14 @@ export class FirestoreService {
                 healthStatus,
             });
 
+            //create alert if needed
+            if (healthStatus === 'faulty' || (healthStatus === 'warning' && magnitude > 3.5 )) {
+                await this.createAlert(userId, {
+                    magnitude,
+                    healthStatus,
+                    vibrationLogId: vibrationLogRef.id,
+                });
+            }
 
             return { success: true, logId: vibrationLogRef.id };
         } catch (error) {
@@ -66,6 +74,49 @@ export class FirestoreService {
             return { success: false, error: error.message }
         }
     };
+
+    private static async createAlert(
+        userId: string,
+        data: {
+            magnitude: number;
+            healthStatus: string;
+            vibrationLogId: string;
+        }
+    ): Promise<void> {
+        let alertType: Alert['alertType'];
+        let severity: Alert['severity'];
+        let title: string;
+        let message: string;
+
+        if (data.healthStatus === 'faulty') {
+            alertType = 'fault_detected';
+            severity = 'critical';
+            title = 'Critical Engine Fault Detected';
+            message = `Engine fault detected with ${data.magnitude.toFixed(2)}m/s² vibration.\nIMMEDIATE ATTENTION REQUIRED.`;
+        } else if (data.magnitude > 7) {
+            alertType = 'critical';
+            severity = 'high';
+            title = 'High Vibration Warning';
+            message = `Unusual vibration levels detected (${data.magnitude.toFixed(2)}m/s²).\nCONSIDER INSPECTION`;
+        } else {
+            alertType = 'high_vibration';
+            severity = 'medium';
+            title = 'May Fault Warning';
+            message = `Engine may fault warning with ${data.magnitude.toFixed(2)}m/s² vibration.\nMONITOR CLOSELY`;
+        }
+
+        await addDoc(collection(db, 'alerts'), {
+            userId,
+            alertType,
+            severity,
+            title,
+            message,
+            vibrationLogId: data.vibrationLogId,
+            isRead: false,
+            isDismissed: false,
+            createdAt: serverTimestamp(),
+        });
+    }
 
     private static async updateHealthSummary(
         userId: string,

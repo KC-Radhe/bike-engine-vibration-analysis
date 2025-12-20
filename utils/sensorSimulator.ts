@@ -29,7 +29,7 @@ export function genereateSimulatedData(
 
     return {
         //adding randomness to axes; gives non-uniform vibration simulating real-world sensor behavior
-        //randomness ranges 0.8 to 1.2m/s²
+        //randomness ranges 0.8 to 1.2m/s² | 
         vibrationX: baseVibration * (0.8 + Math.random() * 0.4),
         vibrationY: baseVibration * (0.8 + Math.random() * 0.4),
         vibrationZ: baseVibration * (0.8 + Math.random() * 0.4),
