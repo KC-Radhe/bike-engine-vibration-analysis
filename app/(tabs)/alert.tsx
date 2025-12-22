@@ -75,6 +75,7 @@ export default function AlertScreen() {
 
   const onRefresh = () => {
     setRefreshing(true);
+    // applyFilter(filteredAlerts, filter);
   };
 
   const markAsRead = async (alertId: string) => {

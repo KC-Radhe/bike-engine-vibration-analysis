@@ -4,7 +4,6 @@ import { Alert, HealthSummary, VibrationLog } from "../types/database";
 
 
 export class FirestoreService {
-
     static async saveVibrationLog(
         userId: string,
         data: {
@@ -245,5 +244,41 @@ export class FirestoreService {
         };
     };
 
+    static async getRecentVibrationLogs(
+        userId: string,
+        limitCount: number = 10,
+    ) : Promise<VibrationLog[] | null> {
+        try {
+            const queryObj = query(
+                collection(db, 'vibrationLogs'),
+                where('userId', '==', userId),
+                orderBy('timestamp', 'desc'),
+                limit(limitCount),
+            );
+            const querySnapshot = await getDocs(queryObj);
+
+            const response = querySnapshot.docs.map( doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    userId: data.userId,
+                    timestamp: data.timestamp?.toDate(),
+                    vibrationX: data.vibrationX,
+                    vibrationY: data.vibrationY,
+                    vibrationZ: data.vibrationZ,
+                    magnitude: data.magnitude,
+                    frequency: data.frequency,
+                    healthStatus: data.healthStatus,
+                    confidenceLevel: data.confidenceLevel,
+                    createdAt: data.createdAt?.toDate(),
+                };
+            });
+
+            return response;
+        } catch (error) {
+            console.error(`Error getting on recent vibration logs: ${error}`);
+            return [];
+        }
+    }
 
 }

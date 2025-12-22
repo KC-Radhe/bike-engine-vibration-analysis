@@ -58,13 +58,13 @@ export default function DashboardScreen() {
     const getStatusIcon = (status: string) => {
         switch (status) {
             case 'healthy':
-                return <CheckCircle2 size={20} color='#16a34a' strokeWidth={2} />;
+                return <CheckCircle2 size={24} color='#16a34a' strokeWidth={2} />;
             case 'warning':
-                return <AlertTriangle size={20} color='#d97706' strokeWidth={2} />;
+                return <AlertTriangle size={24} color='#d97706' strokeWidth={2} />;
             case 'faulty':
-                return <AlertTriangle size={20} color='#dc2626' strokeWidth={2} />;
+                return <AlertTriangle size={24} color='#dc2626' strokeWidth={2} />;
             default:
-                return <RefreshCw size={20} color='#64748b' strokeWidth={2} />;
+                return <RefreshCw size={24} color='#64748b' strokeWidth={2} />;
         }
     };
 
@@ -78,7 +78,7 @@ export default function DashboardScreen() {
         )
     };
 
-    const currentStatus = latestLog?.healthStatus || 'healthy';
+    const currentStatus = latestLog?.healthStatus || null;
     const statusColor = getStatusColor(currentStatus);
     
     return (
@@ -102,13 +102,23 @@ export default function DashboardScreen() {
                 <View style={[styles.statusCard, {backgroundColor: statusColor.bg }]}>
                     <View style={styles.statusHeader}>
                         <Text style={styles.statusTitle}>Current Status</Text>
+                        {currentStatus? (
                         <View style={[styles.statusBadge, { backgroundColor: statusColor.bg }, ]}>
                             {getStatusIcon(currentStatus)}
                             <Text style={[styles.statusBadgeText, { color: statusColor.text }, ]}>
                                 {currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}
                             </Text>
                         </View>
+                        ) : (
+                        <View style={[styles.statusBadge, { backgroundColor: statusColor.bg }, ]}>
+                            <Text style={[styles.statusBadgeText, { color: statusColor.text }, ]}>
+                                NO DATA!!!
+                            </Text>
+                            {getStatusIcon(currentStatus)}
+                        </View>
+                        )}
                     </View>
+                   
                     <Text style={styles.statusDescription}>
                         {latestLog? (
                             <>
@@ -187,57 +197,54 @@ export default function DashboardScreen() {
                     </View>
                 )}
 
-                <View style={styles.statsGrid}>
-                    <View style={styles.statCard}>
-                        <Text style={styles.statLabel}>Total Readings</Text>
-                        <Text style={styles.statValue}>
-                            {healthSummary?.totalReadings || 0}
-                        </Text>
-                    </View>
-                    <View style={styles.statCard}>
-                        <Text style={styles.statLabel}>Health Score</Text>
-                        <Text style={styles.statValue}>
-                            {healthSummary?.overallHealthLevel.toFixed(0) || 0}%
-                        </Text>
-                    </View>
-                    <View style={styles.statCard}>
-                        <Text style={styles.statLabel}>Avg Vibration</Text>
-                        <Text style={styles.statValue}> 
-                            {healthSummary?.avgVibration.toFixed(2) || '0.00'}m/s²
-                        </Text>
-                    </View>
-                    <View style={styles.statCard}>
-                        <Text style={styles.statLabel}>Avg Frequency</Text>
-                        <Text style={styles.statValue}>
-                            {healthSummary?.avgFrequency.toFixed(2) || '0.00'}Hz
-                        </Text>
-                    </View>
-                </View>
-
                 {/* todays overview */}
-                {healthSummary && (
-                    <View style={styles.section} >
-                        <Text style={styles.sectionTitle}>Today`s Overview</Text>
-                        <View style={styles.overviewGrid} >
-                            <View style={styles.overviewItem} >
-                                <View style={[styles.overviewDot, { backgroundColor: '#10b981'}]} />
-                                <Text style={styles.overviewLabel} >Healthy</Text>
-                                <Text style={styles.overviewValue}> {healthSummary.healthyCount} </Text>
-                            </View>
-                            <View style={styles.overviewItem} >
-                                <View style={[styles.overviewDot, { backgroundColor: '#f59e0b'}]} />
-                                <Text style={styles.overviewLabel} >Warning</Text>
-                                <Text style={styles.overviewValue}> {healthSummary.warningCount} </Text>
-                            </View>
-                            <View style={styles.overviewItem} >
-                                <View style={[styles.overviewDot, { backgroundColor: '#ef4444'}]} />
-                                <Text style={styles.overviewLabel} >Faulty</Text>
-                                <Text style={styles.overviewValue}> {healthSummary.faultyCount} </Text>
-                            </View>
+                <View style={styles.section} >
+                    <Text style={styles.sectionTitle}>Today`s Overview</Text>
+                    <View style={styles.overviewGrid} >
+                        <View style={styles.overviewItem} >
+                            <View style={[styles.overviewDot, { backgroundColor: '#10b981'}]} />
+                            <Text style={styles.overviewLabel} >Healthy</Text>
+                            <Text style={styles.overviewValue}> {healthSummary?.healthyCount || 0} </Text>
                         </View>
+                        <View style={styles.overviewItem} >
+                            <View style={[styles.overviewDot, { backgroundColor: '#f59e0b'}]} />
+                            <Text style={styles.overviewLabel} >Warning</Text>
+                            <Text style={styles.overviewValue}> {healthSummary?.warningCount || 0} </Text>
+                        </View>
+                        <View style={styles.overviewItem} >
+                            <View style={[styles.overviewDot, { backgroundColor: '#ef4444'}]} />
+                            <Text style={styles.overviewLabel} >Faulty</Text>
+                            <Text style={styles.overviewValue}> {healthSummary?.faultyCount || 0} </Text>
+                        </View>
+                    </View>  
 
-                    </View>
-                )}
+                    <View style={styles.statsGrid}>
+                        <View style={styles.statCard}>
+                            <Text style={styles.statLabel}>Total Readings</Text>
+                            <Text style={styles.statValue}>
+                                {healthSummary?.totalReadings || 0}
+                            </Text>
+                        </View>
+                        <View style={styles.statCard}>
+                            <Text style={styles.statLabel}>Health Score</Text>
+                            <Text style={styles.statValue}>
+                                {healthSummary?.overallHealthLevel.toFixed(0) || 0}%
+                            </Text>
+                        </View>
+                        <View style={styles.statCard}>
+                            <Text style={styles.statLabel}>Avg Vibration</Text>
+                            <Text style={styles.statValue}> 
+                                {healthSummary?.avgVibration.toFixed(2) || '0.00'}m/s²
+                            </Text>
+                        </View>
+                        <View style={styles.statCard}>
+                            <Text style={styles.statLabel}>Avg Frequency</Text>
+                            <Text style={styles.statValue}>
+                                {healthSummary?.avgFrequency.toFixed(2) || '0.00'}Hz
+                            </Text>
+                        </View>
+                    </View> 
+                </View>
 
             </ScrollView>
             <SimulatorButton onDataSent={loadData} />
@@ -310,9 +317,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#dcfcdc',
     },
     statusBadgeText: {
-        fontSize: 12,
+        fontSize: 18,
         fontWeight: '600',
-        color: '#16a34a',
     },
     statusDescription: {
         fontSize: 14,
@@ -322,11 +328,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: 10,
+        marginTop: 10,
     },
     statCard: {
         flex: 1,
         minWidth: '45%',
-        backgroundColor: '#fff',
         borderRadius: 15,
         padding: 16,
         borderWidth: 1,
@@ -380,6 +386,10 @@ const styles = StyleSheet.create({
      overviewGrid: {
         flexDirection: 'row',
         justifyContent: 'space-around',
+        borderRadius: 15,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
     },
     overviewItem: {
         alignItems: 'center',
