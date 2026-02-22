@@ -20,7 +20,8 @@
       },
       "package": "com.radheshyam.bikehealthmonitor",
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",
@@ -40,11 +41,19 @@
             "image": "./assets/icons/adaptive-icon.png"
           }
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "938a5f8c-a641-4e07-bfb8-57d7268a2330"
+      }
+    },
+    "owner": "its-kc_radheshyam"
   }
 }
