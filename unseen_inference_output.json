@@ -1,0 +1,1636 @@
+{
+  "generated_at": "2026-02-22T02:51:08",
+  "model_path": "C:\\Users\\Lenovo\\Downloads\\vibration\\runs\\bike_lstm\\20260222_022851\\best_model.pt",
+  "unseen_csv": "C:\\Users\\Lenovo\\Downloads\\vibration\\unseen_data.csv",
+  "overall": {
+    "rows": 1283,
+    "vibration_stats": {
+      "mean": 1.042595624923706,
+      "min": 0.8899999856948853,
+      "max": 1.2380000352859497
+    },
+    "probability_stats": {
+      "mean_faulty_probability": 0.9989654421806335,
+      "min_faulty_probability": 0.9987945556640625,
+      "max_faulty_probability": 0.9991044402122498,
+      "threshold_used": 0.4499999999999999,
+      "total_windows": 124,
+      "predicted_faulty_windows": 124,
+      "predicted_healthy_windows": 0
+    }
+  },
+  "windows": [
+    {
+      "start_idx": 0,
+      "end_idx": 49,
+      "start_time_ms": 1028,
+      "end_time_ms": 1372,
+      "vibration_stats": {
+        "mean": 1.0332399606704712,
+        "min": 0.9210000038146973,
+        "max": 1.1430000066757202
+      },
+      "faulty_probability": 0.9989022016525269,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 10,
+      "end_idx": 59,
+      "start_time_ms": 1099,
+      "end_time_ms": 1442,
+      "vibration_stats": {
+        "mean": 1.0283399820327759,
+        "min": 0.9210000038146973,
+        "max": 1.1430000066757202
+      },
+      "faulty_probability": 0.998927652835846,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 20,
+      "end_idx": 69,
+      "start_time_ms": 1169,
+      "end_time_ms": 1512,
+      "vibration_stats": {
+        "mean": 1.0284600257873535,
+        "min": 0.9210000038146973,
+        "max": 1.13100004196167
+      },
+      "faulty_probability": 0.9989031553268433,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 30,
+      "end_idx": 79,
+      "start_time_ms": 1239,
+      "end_time_ms": 1582,
+      "vibration_stats": {
+        "mean": 1.0295798778533936,
+        "min": 0.9210000038146973,
+        "max": 1.2230000495910645
+      },
+      "faulty_probability": 0.9990111589431763,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 40,
+      "end_idx": 89,
+      "start_time_ms": 1309,
+      "end_time_ms": 1652,
+      "vibration_stats": {
+        "mean": 1.0406399965286255,
+        "min": 0.9430000185966492,
+        "max": 1.2230000495910645
+      },
+      "faulty_probability": 0.9988344311714172,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 50,
+      "end_idx": 99,
+      "start_time_ms": 1379,
+      "end_time_ms": 1722,
+      "vibration_stats": {
+        "mean": 1.0429599285125732,
+        "min": 0.9430000185966492,
+        "max": 1.2230000495910645
+      },
+      "faulty_probability": 0.9989404082298279,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 60,
+      "end_idx": 109,
+      "start_time_ms": 1449,
+      "end_time_ms": 1792,
+      "vibration_stats": {
+        "mean": 1.0394999980926514,
+        "min": 0.9089999794960022,
+        "max": 1.2230000495910645
+      },
+      "faulty_probability": 0.9988456964492798,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 70,
+      "end_idx": 119,
+      "start_time_ms": 1519,
+      "end_time_ms": 1862,
+      "vibration_stats": {
+        "mean": 1.0416200160980225,
+        "min": 0.9089999794960022,
+        "max": 1.2380000352859497
+      },
+      "faulty_probability": 0.9988887906074524,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 80,
+      "end_idx": 129,
+      "start_time_ms": 1589,
+      "end_time_ms": 1932,
+      "vibration_stats": {
+        "mean": 1.0402199029922485,
+        "min": 0.9089999794960022,
+        "max": 1.2380000352859497
+      },
+      "faulty_probability": 0.9989578723907471,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 90,
+      "end_idx": 139,
+      "start_time_ms": 1659,
+      "end_time_ms": 2002,
+      "vibration_stats": {
+        "mean": 1.0437201261520386,
+        "min": 0.9089999794960022,
+        "max": 1.2380000352859497
+      },
+      "faulty_probability": 0.9988839030265808,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 100,
+      "end_idx": 149,
+      "start_time_ms": 1729,
+      "end_time_ms": 2072,
+      "vibration_stats": {
+        "mean": 1.0458400249481201,
+        "min": 0.9089999794960022,
+        "max": 1.2380000352859497
+      },
+      "faulty_probability": 0.9987945556640625,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 110,
+      "end_idx": 159,
+      "start_time_ms": 1799,
+      "end_time_ms": 2142,
+      "vibration_stats": {
+        "mean": 1.0515999794006348,
+        "min": 0.9319999814033508,
+        "max": 1.2380000352859497
+      },
+      "faulty_probability": 0.9988013505935669,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 120,
+      "end_idx": 169,
+      "start_time_ms": 1869,
+      "end_time_ms": 2212,
+      "vibration_stats": {
+        "mean": 1.0485399961471558,
+        "min": 0.9319999814033508,
+        "max": 1.190999984741211
+      },
+      "faulty_probability": 0.9988889098167419,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 130,
+      "end_idx": 179,
+      "start_time_ms": 1939,
+      "end_time_ms": 2282,
+      "vibration_stats": {
+        "mean": 1.053439974784851,
+        "min": 0.9399999976158142,
+        "max": 1.190999984741211
+      },
+      "faulty_probability": 0.998924195766449,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 140,
+      "end_idx": 189,
+      "start_time_ms": 2009,
+      "end_time_ms": 2352,
+      "vibration_stats": {
+        "mean": 1.0474799871444702,
+        "min": 0.9399999976158142,
+        "max": 1.1419999599456787
+      },
+      "faulty_probability": 0.9988478422164917,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 150,
+      "end_idx": 199,
+      "start_time_ms": 2079,
+      "end_time_ms": 2422,
+      "vibration_stats": {
+        "mean": 1.0408400297164917,
+        "min": 0.9399999976158142,
+        "max": 1.1419999599456787
+      },
+      "faulty_probability": 0.9988393187522888,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 160,
+      "end_idx": 209,
+      "start_time_ms": 2149,
+      "end_time_ms": 2492,
+      "vibration_stats": {
+        "mean": 1.0448200702667236,
+        "min": 0.9399999976158142,
+        "max": 1.1239999532699585
+      },
+      "faulty_probability": 0.9989546537399292,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 170,
+      "end_idx": 219,
+      "start_time_ms": 2219,
+      "end_time_ms": 2562,
+      "vibration_stats": {
+        "mean": 1.050320029258728,
+        "min": 0.9509999752044678,
+        "max": 1.1380000114440918
+      },
+      "faulty_probability": 0.9989067316055298,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 180,
+      "end_idx": 229,
+      "start_time_ms": 2289,
+      "end_time_ms": 2632,
+      "vibration_stats": {
+        "mean": 1.0510200262069702,
+        "min": 0.9509999752044678,
+        "max": 1.1380000114440918
+      },
+      "faulty_probability": 0.9989056587219238,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 190,
+      "end_idx": 239,
+      "start_time_ms": 2359,
+      "end_time_ms": 2702,
+      "vibration_stats": {
+        "mean": 1.0491600036621094,
+        "min": 0.9509999752044678,
+        "max": 1.1380000114440918
+      },
+      "faulty_probability": 0.9988483190536499,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 200,
+      "end_idx": 249,
+      "start_time_ms": 2429,
+      "end_time_ms": 2772,
+      "vibration_stats": {
+        "mean": 1.0512399673461914,
+        "min": 0.9520000219345093,
+        "max": 1.1380000114440918
+      },
+      "faulty_probability": 0.9988746047019958,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 210,
+      "end_idx": 259,
+      "start_time_ms": 2499,
+      "end_time_ms": 2842,
+      "vibration_stats": {
+        "mean": 1.0472800731658936,
+        "min": 0.9520000219345093,
+        "max": 1.1970000267028809
+      },
+      "faulty_probability": 0.9988592863082886,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 220,
+      "end_idx": 269,
+      "start_time_ms": 2569,
+      "end_time_ms": 2912,
+      "vibration_stats": {
+        "mean": 1.043779969215393,
+        "min": 0.9520000219345093,
+        "max": 1.1970000267028809
+      },
+      "faulty_probability": 0.9988600015640259,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 230,
+      "end_idx": 279,
+      "start_time_ms": 2639,
+      "end_time_ms": 2982,
+      "vibration_stats": {
+        "mean": 1.0397800207138062,
+        "min": 0.9399999976158142,
+        "max": 1.1970000267028809
+      },
+      "faulty_probability": 0.9989175796508789,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 240,
+      "end_idx": 289,
+      "start_time_ms": 2709,
+      "end_time_ms": 3052,
+      "vibration_stats": {
+        "mean": 1.0362601280212402,
+        "min": 0.9399999976158142,
+        "max": 1.1970000267028809
+      },
+      "faulty_probability": 0.9988930821418762,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 250,
+      "end_idx": 299,
+      "start_time_ms": 2779,
+      "end_time_ms": 3122,
+      "vibration_stats": {
+        "mean": 1.0348598957061768,
+        "min": 0.9399999976158142,
+        "max": 1.1970000267028809
+      },
+      "faulty_probability": 0.9989997744560242,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 260,
+      "end_idx": 309,
+      "start_time_ms": 2849,
+      "end_time_ms": 3192,
+      "vibration_stats": {
+        "mean": 1.0361199378967285,
+        "min": 0.9330000281333923,
+        "max": 1.1950000524520874
+      },
+      "faulty_probability": 0.9989756345748901,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 270,
+      "end_idx": 319,
+      "start_time_ms": 2919,
+      "end_time_ms": 3262,
+      "vibration_stats": {
+        "mean": 1.0418599843978882,
+        "min": 0.9330000281333923,
+        "max": 1.1950000524520874
+      },
+      "faulty_probability": 0.9987987279891968,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 280,
+      "end_idx": 329,
+      "start_time_ms": 2989,
+      "end_time_ms": 3332,
+      "vibration_stats": {
+        "mean": 1.043619990348816,
+        "min": 0.9330000281333923,
+        "max": 1.1950000524520874
+      },
+      "faulty_probability": 0.9988604784011841,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 290,
+      "end_idx": 339,
+      "start_time_ms": 3059,
+      "end_time_ms": 3402,
+      "vibration_stats": {
+        "mean": 1.0484000444412231,
+        "min": 0.9330000281333923,
+        "max": 1.1950000524520874
+      },
+      "faulty_probability": 0.9988152980804443,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 300,
+      "end_idx": 349,
+      "start_time_ms": 3129,
+      "end_time_ms": 3472,
+      "vibration_stats": {
+        "mean": 1.0499999523162842,
+        "min": 0.9330000281333923,
+        "max": 1.1959999799728394
+      },
+      "faulty_probability": 0.9989907145500183,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 310,
+      "end_idx": 359,
+      "start_time_ms": 3199,
+      "end_time_ms": 3542,
+      "vibration_stats": {
+        "mean": 1.050819993019104,
+        "min": 0.9399999976158142,
+        "max": 1.2300000190734863
+      },
+      "faulty_probability": 0.9988642930984497,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 320,
+      "end_idx": 369,
+      "start_time_ms": 3269,
+      "end_time_ms": 3612,
+      "vibration_stats": {
+        "mean": 1.0481600761413574,
+        "min": 0.9269999861717224,
+        "max": 1.2300000190734863
+      },
+      "faulty_probability": 0.9989230036735535,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 330,
+      "end_idx": 379,
+      "start_time_ms": 3339,
+      "end_time_ms": 3682,
+      "vibration_stats": {
+        "mean": 1.0524200201034546,
+        "min": 0.9269999861717224,
+        "max": 1.2300000190734863
+      },
+      "faulty_probability": 0.9989156723022461,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 340,
+      "end_idx": 389,
+      "start_time_ms": 3409,
+      "end_time_ms": 3752,
+      "vibration_stats": {
+        "mean": 1.056839942932129,
+        "min": 0.9269999861717224,
+        "max": 1.2300000190734863
+      },
+      "faulty_probability": 0.9989608526229858,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 350,
+      "end_idx": 399,
+      "start_time_ms": 3479,
+      "end_time_ms": 3822,
+      "vibration_stats": {
+        "mean": 1.0561400651931763,
+        "min": 0.9269999861717224,
+        "max": 1.2300000190734863
+      },
+      "faulty_probability": 0.9988436698913574,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 360,
+      "end_idx": 409,
+      "start_time_ms": 3549,
+      "end_time_ms": 3892,
+      "vibration_stats": {
+        "mean": 1.056380033493042,
+        "min": 0.9269999861717224,
+        "max": 1.194000005722046
+      },
+      "faulty_probability": 0.9989761114120483,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 370,
+      "end_idx": 419,
+      "start_time_ms": 3619,
+      "end_time_ms": 3962,
+      "vibration_stats": {
+        "mean": 1.0467000007629395,
+        "min": 0.9380000233650208,
+        "max": 1.194000005722046
+      },
+      "faulty_probability": 0.998968243598938,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 380,
+      "end_idx": 429,
+      "start_time_ms": 3689,
+      "end_time_ms": 4032,
+      "vibration_stats": {
+        "mean": 1.0383399724960327,
+        "min": 0.9380000233650208,
+        "max": 1.194000005722046
+      },
+      "faulty_probability": 0.9989952445030212,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 390,
+      "end_idx": 439,
+      "start_time_ms": 3759,
+      "end_time_ms": 4102,
+      "vibration_stats": {
+        "mean": 1.0338200330734253,
+        "min": 0.9259999990463257,
+        "max": 1.194000005722046
+      },
+      "faulty_probability": 0.9990091323852539,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 400,
+      "end_idx": 449,
+      "start_time_ms": 3829,
+      "end_time_ms": 4172,
+      "vibration_stats": {
+        "mean": 1.0399399995803833,
+        "min": 0.9259999990463257,
+        "max": 1.159999966621399
+      },
+      "faulty_probability": 0.998968243598938,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 410,
+      "end_idx": 459,
+      "start_time_ms": 3899,
+      "end_time_ms": 4242,
+      "vibration_stats": {
+        "mean": 1.0324199199676514,
+        "min": 0.9259999990463257,
+        "max": 1.159999966621399
+      },
+      "faulty_probability": 0.9989444613456726,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 420,
+      "end_idx": 469,
+      "start_time_ms": 3969,
+      "end_time_ms": 4312,
+      "vibration_stats": {
+        "mean": 1.032480001449585,
+        "min": 0.9259999990463257,
+        "max": 1.159999966621399
+      },
+      "faulty_probability": 0.9989868998527527,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 430,
+      "end_idx": 479,
+      "start_time_ms": 4039,
+      "end_time_ms": 4382,
+      "vibration_stats": {
+        "mean": 1.0395599603652954,
+        "min": 0.9259999990463257,
+        "max": 1.159999966621399
+      },
+      "faulty_probability": 0.9989997744560242,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 440,
+      "end_idx": 489,
+      "start_time_ms": 4109,
+      "end_time_ms": 4452,
+      "vibration_stats": {
+        "mean": 1.0429799556732178,
+        "min": 0.9359999895095825,
+        "max": 1.159999966621399
+      },
+      "faulty_probability": 0.9989510774612427,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 450,
+      "end_idx": 499,
+      "start_time_ms": 4179,
+      "end_time_ms": 4522,
+      "vibration_stats": {
+        "mean": 1.0411800146102905,
+        "min": 0.9359999895095825,
+        "max": 1.1299999952316284
+      },
+      "faulty_probability": 0.9989302754402161,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 460,
+      "end_idx": 509,
+      "start_time_ms": 4249,
+      "end_time_ms": 4592,
+      "vibration_stats": {
+        "mean": 1.0431199073791504,
+        "min": 0.9359999895095825,
+        "max": 1.1299999952316284
+      },
+      "faulty_probability": 0.99894779920578,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 470,
+      "end_idx": 519,
+      "start_time_ms": 4319,
+      "end_time_ms": 4662,
+      "vibration_stats": {
+        "mean": 1.0488799810409546,
+        "min": 0.9399999976158142,
+        "max": 1.1299999952316284
+      },
+      "faulty_probability": 0.9989712238311768,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 480,
+      "end_idx": 529,
+      "start_time_ms": 4389,
+      "end_time_ms": 4732,
+      "vibration_stats": {
+        "mean": 1.0450198650360107,
+        "min": 0.9390000104904175,
+        "max": 1.1390000581741333
+      },
+      "faulty_probability": 0.9989618062973022,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 490,
+      "end_idx": 539,
+      "start_time_ms": 4459,
+      "end_time_ms": 4802,
+      "vibration_stats": {
+        "mean": 1.0402599573135376,
+        "min": 0.9390000104904175,
+        "max": 1.1390000581741333
+      },
+      "faulty_probability": 0.9989369511604309,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 500,
+      "end_idx": 549,
+      "start_time_ms": 4529,
+      "end_time_ms": 4872,
+      "vibration_stats": {
+        "mean": 1.0371400117874146,
+        "min": 0.9390000104904175,
+        "max": 1.1390000581741333
+      },
+      "faulty_probability": 0.9988991022109985,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 510,
+      "end_idx": 559,
+      "start_time_ms": 4599,
+      "end_time_ms": 4942,
+      "vibration_stats": {
+        "mean": 1.0417399406433105,
+        "min": 0.9390000104904175,
+        "max": 1.187999963760376
+      },
+      "faulty_probability": 0.9989076852798462,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 520,
+      "end_idx": 569,
+      "start_time_ms": 4669,
+      "end_time_ms": 5012,
+      "vibration_stats": {
+        "mean": 1.0369200706481934,
+        "min": 0.9359999895095825,
+        "max": 1.194000005722046
+      },
+      "faulty_probability": 0.9989751577377319,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 530,
+      "end_idx": 579,
+      "start_time_ms": 4739,
+      "end_time_ms": 5082,
+      "vibration_stats": {
+        "mean": 1.0428199768066406,
+        "min": 0.9359999895095825,
+        "max": 1.2020000219345093
+      },
+      "faulty_probability": 0.9989656209945679,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 540,
+      "end_idx": 589,
+      "start_time_ms": 4809,
+      "end_time_ms": 5152,
+      "vibration_stats": {
+        "mean": 1.0454400777816772,
+        "min": 0.9359999895095825,
+        "max": 1.2020000219345093
+      },
+      "faulty_probability": 0.9989621639251709,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 550,
+      "end_idx": 599,
+      "start_time_ms": 4879,
+      "end_time_ms": 5222,
+      "vibration_stats": {
+        "mean": 1.041100025177002,
+        "min": 0.9229999780654907,
+        "max": 1.2020000219345093
+      },
+      "faulty_probability": 0.998916745185852,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 560,
+      "end_idx": 609,
+      "start_time_ms": 4949,
+      "end_time_ms": 5292,
+      "vibration_stats": {
+        "mean": 1.0370599031448364,
+        "min": 0.8999999761581421,
+        "max": 1.2020000219345093
+      },
+      "faulty_probability": 0.9989888072013855,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 570,
+      "end_idx": 619,
+      "start_time_ms": 5019,
+      "end_time_ms": 5362,
+      "vibration_stats": {
+        "mean": 1.036020040512085,
+        "min": 0.8999999761581421,
+        "max": 1.2020000219345093
+      },
+      "faulty_probability": 0.9988893866539001,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 580,
+      "end_idx": 629,
+      "start_time_ms": 5089,
+      "end_time_ms": 5432,
+      "vibration_stats": {
+        "mean": 1.0311399698257446,
+        "min": 0.8999999761581421,
+        "max": 1.1660000085830688
+      },
+      "faulty_probability": 0.9989902377128601,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 590,
+      "end_idx": 639,
+      "start_time_ms": 5159,
+      "end_time_ms": 5502,
+      "vibration_stats": {
+        "mean": 1.0371599197387695,
+        "min": 0.8999999761581421,
+        "max": 1.1770000457763672
+      },
+      "faulty_probability": 0.9989385008811951,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 600,
+      "end_idx": 649,
+      "start_time_ms": 5229,
+      "end_time_ms": 5572,
+      "vibration_stats": {
+        "mean": 1.0388599634170532,
+        "min": 0.8999999761581421,
+        "max": 1.1770000457763672
+      },
+      "faulty_probability": 0.998950719833374,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 610,
+      "end_idx": 659,
+      "start_time_ms": 5299,
+      "end_time_ms": 5642,
+      "vibration_stats": {
+        "mean": 1.0417799949645996,
+        "min": 0.9340000152587891,
+        "max": 1.1770000457763672
+      },
+      "faulty_probability": 0.9989821314811707,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 620,
+      "end_idx": 669,
+      "start_time_ms": 5369,
+      "end_time_ms": 5712,
+      "vibration_stats": {
+        "mean": 1.0473400354385376,
+        "min": 0.9369999766349792,
+        "max": 1.1770000457763672
+      },
+      "faulty_probability": 0.9989363551139832,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 630,
+      "end_idx": 679,
+      "start_time_ms": 5439,
+      "end_time_ms": 5782,
+      "vibration_stats": {
+        "mean": 1.0419600009918213,
+        "min": 0.9369999766349792,
+        "max": 1.1770000457763672
+      },
+      "faulty_probability": 0.9989373087882996,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 640,
+      "end_idx": 689,
+      "start_time_ms": 5509,
+      "end_time_ms": 5852,
+      "vibration_stats": {
+        "mean": 1.03193998336792,
+        "min": 0.9369999766349792,
+        "max": 1.1519999504089355
+      },
+      "faulty_probability": 0.9990522265434265,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 650,
+      "end_idx": 699,
+      "start_time_ms": 5579,
+      "end_time_ms": 5922,
+      "vibration_stats": {
+        "mean": 1.0296599864959717,
+        "min": 0.8899999856948853,
+        "max": 1.1649999618530273
+      },
+      "faulty_probability": 0.998936116695404,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 660,
+      "end_idx": 709,
+      "start_time_ms": 5649,
+      "end_time_ms": 5992,
+      "vibration_stats": {
+        "mean": 1.0322599411010742,
+        "min": 0.8899999856948853,
+        "max": 1.2009999752044678
+      },
+      "faulty_probability": 0.9991044402122498,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 670,
+      "end_idx": 719,
+      "start_time_ms": 5719,
+      "end_time_ms": 6062,
+      "vibration_stats": {
+        "mean": 1.0322799682617188,
+        "min": 0.8899999856948853,
+        "max": 1.2009999752044678
+      },
+      "faulty_probability": 0.998989999294281,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 680,
+      "end_idx": 729,
+      "start_time_ms": 5789,
+      "end_time_ms": 6132,
+      "vibration_stats": {
+        "mean": 1.0341200828552246,
+        "min": 0.8899999856948853,
+        "max": 1.2009999752044678
+      },
+      "faulty_probability": 0.9989126920700073,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 690,
+      "end_idx": 739,
+      "start_time_ms": 5859,
+      "end_time_ms": 6202,
+      "vibration_stats": {
+        "mean": 1.0338000059127808,
+        "min": 0.8899999856948853,
+        "max": 1.2009999752044678
+      },
+      "faulty_probability": 0.9990668892860413,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 700,
+      "end_idx": 749,
+      "start_time_ms": 5929,
+      "end_time_ms": 6272,
+      "vibration_stats": {
+        "mean": 1.0383599996566772,
+        "min": 0.9089999794960022,
+        "max": 1.2009999752044678
+      },
+      "faulty_probability": 0.9989742040634155,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 710,
+      "end_idx": 759,
+      "start_time_ms": 5999,
+      "end_time_ms": 6342,
+      "vibration_stats": {
+        "mean": 1.03603994846344,
+        "min": 0.9089999794960022,
+        "max": 1.1349999904632568
+      },
+      "faulty_probability": 0.9989632368087769,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 720,
+      "end_idx": 769,
+      "start_time_ms": 6069,
+      "end_time_ms": 6412,
+      "vibration_stats": {
+        "mean": 1.0342400074005127,
+        "min": 0.9070000052452087,
+        "max": 1.1399999856948853
+      },
+      "faulty_probability": 0.9989981055259705,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 730,
+      "end_idx": 779,
+      "start_time_ms": 6139,
+      "end_time_ms": 6482,
+      "vibration_stats": {
+        "mean": 1.0381399393081665,
+        "min": 0.9070000052452087,
+        "max": 1.1619999408721924
+      },
+      "faulty_probability": 0.9990509152412415,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 740,
+      "end_idx": 789,
+      "start_time_ms": 6209,
+      "end_time_ms": 6552,
+      "vibration_stats": {
+        "mean": 1.0468000173568726,
+        "min": 0.9070000052452087,
+        "max": 1.1699999570846558
+      },
+      "faulty_probability": 0.9989964365959167,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 750,
+      "end_idx": 799,
+      "start_time_ms": 6279,
+      "end_time_ms": 6622,
+      "vibration_stats": {
+        "mean": 1.0435199737548828,
+        "min": 0.9070000052452087,
+        "max": 1.1699999570846558
+      },
+      "faulty_probability": 0.9990078806877136,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 760,
+      "end_idx": 809,
+      "start_time_ms": 6349,
+      "end_time_ms": 6692,
+      "vibration_stats": {
+        "mean": 1.0413000583648682,
+        "min": 0.9070000052452087,
+        "max": 1.1699999570846558
+      },
+      "faulty_probability": 0.998995840549469,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 770,
+      "end_idx": 819,
+      "start_time_ms": 6419,
+      "end_time_ms": 6762,
+      "vibration_stats": {
+        "mean": 1.0454999208450317,
+        "min": 0.9570000171661377,
+        "max": 1.1699999570846558
+      },
+      "faulty_probability": 0.9989884495735168,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 780,
+      "end_idx": 829,
+      "start_time_ms": 6489,
+      "end_time_ms": 6832,
+      "vibration_stats": {
+        "mean": 1.0469800233840942,
+        "min": 0.9570000171661377,
+        "max": 1.1699999570846558
+      },
+      "faulty_probability": 0.9989197254180908,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 790,
+      "end_idx": 839,
+      "start_time_ms": 6559,
+      "end_time_ms": 6902,
+      "vibration_stats": {
+        "mean": 1.0471199750900269,
+        "min": 0.9570000171661377,
+        "max": 1.149999976158142
+      },
+      "faulty_probability": 0.9989715814590454,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 800,
+      "end_idx": 849,
+      "start_time_ms": 6629,
+      "end_time_ms": 6972,
+      "vibration_stats": {
+        "mean": 1.0499399900436401,
+        "min": 0.9570000171661377,
+        "max": 1.149999976158142
+      },
+      "faulty_probability": 0.998940646648407,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 810,
+      "end_idx": 859,
+      "start_time_ms": 6699,
+      "end_time_ms": 7042,
+      "vibration_stats": {
+        "mean": 1.0509600639343262,
+        "min": 0.9279999732971191,
+        "max": 1.1549999713897705
+      },
+      "faulty_probability": 0.9989499449729919,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 820,
+      "end_idx": 869,
+      "start_time_ms": 6769,
+      "end_time_ms": 7112,
+      "vibration_stats": {
+        "mean": 1.049299955368042,
+        "min": 0.9279999732971191,
+        "max": 1.1549999713897705
+      },
+      "faulty_probability": 0.9989796280860901,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 830,
+      "end_idx": 879,
+      "start_time_ms": 6839,
+      "end_time_ms": 7182,
+      "vibration_stats": {
+        "mean": 1.047339916229248,
+        "min": 0.9279999732971191,
+        "max": 1.1549999713897705
+      },
+      "faulty_probability": 0.999007523059845,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 840,
+      "end_idx": 889,
+      "start_time_ms": 6909,
+      "end_time_ms": 7252,
+      "vibration_stats": {
+        "mean": 1.0418800115585327,
+        "min": 0.9279999732971191,
+        "max": 1.1549999713897705
+      },
+      "faulty_probability": 0.9989498257637024,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 850,
+      "end_idx": 899,
+      "start_time_ms": 6979,
+      "end_time_ms": 7322,
+      "vibration_stats": {
+        "mean": 1.0412999391555786,
+        "min": 0.9279999732971191,
+        "max": 1.1549999713897705
+      },
+      "faulty_probability": 0.9990144968032837,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 860,
+      "end_idx": 909,
+      "start_time_ms": 7049,
+      "end_time_ms": 7392,
+      "vibration_stats": {
+        "mean": 1.0424599647521973,
+        "min": 0.9290000200271606,
+        "max": 1.2089999914169312
+      },
+      "faulty_probability": 0.9990039467811584,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 870,
+      "end_idx": 919,
+      "start_time_ms": 7119,
+      "end_time_ms": 7462,
+      "vibration_stats": {
+        "mean": 1.0436400175094604,
+        "min": 0.9290000200271606,
+        "max": 1.2089999914169312
+      },
+      "faulty_probability": 0.9989915490150452,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 880,
+      "end_idx": 929,
+      "start_time_ms": 7189,
+      "end_time_ms": 7532,
+      "vibration_stats": {
+        "mean": 1.0413600206375122,
+        "min": 0.9290000200271606,
+        "max": 1.2089999914169312
+      },
+      "faulty_probability": 0.998997151851654,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 890,
+      "end_idx": 939,
+      "start_time_ms": 7259,
+      "end_time_ms": 7602,
+      "vibration_stats": {
+        "mean": 1.042680025100708,
+        "min": 0.9290000200271606,
+        "max": 1.2089999914169312
+      },
+      "faulty_probability": 0.9989823698997498,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 900,
+      "end_idx": 949,
+      "start_time_ms": 7329,
+      "end_time_ms": 7672,
+      "vibration_stats": {
+        "mean": 1.04830002784729,
+        "min": 0.9290000200271606,
+        "max": 1.2089999914169312
+      },
+      "faulty_probability": 0.9990185499191284,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 910,
+      "end_idx": 959,
+      "start_time_ms": 7399,
+      "end_time_ms": 7742,
+      "vibration_stats": {
+        "mean": 1.0482600927352905,
+        "min": 0.9300000071525574,
+        "max": 1.1959999799728394
+      },
+      "faulty_probability": 0.9990569949150085,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 920,
+      "end_idx": 969,
+      "start_time_ms": 7469,
+      "end_time_ms": 7812,
+      "vibration_stats": {
+        "mean": 1.0406200885772705,
+        "min": 0.9300000071525574,
+        "max": 1.1959999799728394
+      },
+      "faulty_probability": 0.9990654587745667,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 930,
+      "end_idx": 979,
+      "start_time_ms": 7539,
+      "end_time_ms": 7882,
+      "vibration_stats": {
+        "mean": 1.0464799404144287,
+        "min": 0.9300000071525574,
+        "max": 1.1959999799728394
+      },
+      "faulty_probability": 0.9990317821502686,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 940,
+      "end_idx": 989,
+      "start_time_ms": 7609,
+      "end_time_ms": 7952,
+      "vibration_stats": {
+        "mean": 1.0455999374389648,
+        "min": 0.9269999861717224,
+        "max": 1.1959999799728394
+      },
+      "faulty_probability": 0.9990620017051697,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 950,
+      "end_idx": 999,
+      "start_time_ms": 7679,
+      "end_time_ms": 8022,
+      "vibration_stats": {
+        "mean": 1.042120099067688,
+        "min": 0.9269999861717224,
+        "max": 1.159999966621399
+      },
+      "faulty_probability": 0.9989778995513916,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 960,
+      "end_idx": 1009,
+      "start_time_ms": 7749,
+      "end_time_ms": 8092,
+      "vibration_stats": {
+        "mean": 1.0413399934768677,
+        "min": 0.9269999861717224,
+        "max": 1.184000015258789
+      },
+      "faulty_probability": 0.9989639520645142,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 970,
+      "end_idx": 1019,
+      "start_time_ms": 7819,
+      "end_time_ms": 8162,
+      "vibration_stats": {
+        "mean": 1.0476999282836914,
+        "min": 0.9269999861717224,
+        "max": 1.184000015258789
+      },
+      "faulty_probability": 0.9989131689071655,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 980,
+      "end_idx": 1029,
+      "start_time_ms": 7889,
+      "end_time_ms": 8232,
+      "vibration_stats": {
+        "mean": 1.0454199314117432,
+        "min": 0.9269999861717224,
+        "max": 1.184000015258789
+      },
+      "faulty_probability": 0.9990010857582092,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 990,
+      "end_idx": 1039,
+      "start_time_ms": 7959,
+      "end_time_ms": 8302,
+      "vibration_stats": {
+        "mean": 1.0396400690078735,
+        "min": 0.9430000185966492,
+        "max": 1.184000015258789
+      },
+      "faulty_probability": 0.9990205764770508,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1000,
+      "end_idx": 1049,
+      "start_time_ms": 8029,
+      "end_time_ms": 8372,
+      "vibration_stats": {
+        "mean": 1.0402599573135376,
+        "min": 0.9350000023841858,
+        "max": 1.190999984741211
+      },
+      "faulty_probability": 0.9989945292472839,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1010,
+      "end_idx": 1059,
+      "start_time_ms": 8099,
+      "end_time_ms": 8442,
+      "vibration_stats": {
+        "mean": 1.0433599948883057,
+        "min": 0.9350000023841858,
+        "max": 1.190999984741211
+      },
+      "faulty_probability": 0.9990243911743164,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1020,
+      "end_idx": 1069,
+      "start_time_ms": 8169,
+      "end_time_ms": 8512,
+      "vibration_stats": {
+        "mean": 1.042660117149353,
+        "min": 0.9350000023841858,
+        "max": 1.190999984741211
+      },
+      "faulty_probability": 0.9990227222442627,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1030,
+      "end_idx": 1079,
+      "start_time_ms": 8239,
+      "end_time_ms": 8582,
+      "vibration_stats": {
+        "mean": 1.0388200283050537,
+        "min": 0.9350000023841858,
+        "max": 1.190999984741211
+      },
+      "faulty_probability": 0.9990399479866028,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1040,
+      "end_idx": 1089,
+      "start_time_ms": 8309,
+      "end_time_ms": 8652,
+      "vibration_stats": {
+        "mean": 1.0460799932479858,
+        "min": 0.9350000023841858,
+        "max": 1.190999984741211
+      },
+      "faulty_probability": 0.9990347623825073,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1050,
+      "end_idx": 1099,
+      "start_time_ms": 8379,
+      "end_time_ms": 8722,
+      "vibration_stats": {
+        "mean": 1.045740008354187,
+        "min": 0.9409999847412109,
+        "max": 1.1460000276565552
+      },
+      "faulty_probability": 0.9990411400794983,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1060,
+      "end_idx": 1109,
+      "start_time_ms": 8449,
+      "end_time_ms": 8792,
+      "vibration_stats": {
+        "mean": 1.0430200099945068,
+        "min": 0.9409999847412109,
+        "max": 1.1380000114440918
+      },
+      "faulty_probability": 0.9989975094795227,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1070,
+      "end_idx": 1119,
+      "start_time_ms": 8519,
+      "end_time_ms": 8862,
+      "vibration_stats": {
+        "mean": 1.0413399934768677,
+        "min": 0.9380000233650208,
+        "max": 1.1419999599456787
+      },
+      "faulty_probability": 0.9990196228027344,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1080,
+      "end_idx": 1129,
+      "start_time_ms": 8589,
+      "end_time_ms": 8932,
+      "vibration_stats": {
+        "mean": 1.0440200567245483,
+        "min": 0.9380000233650208,
+        "max": 1.1460000276565552
+      },
+      "faulty_probability": 0.9990113973617554,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1090,
+      "end_idx": 1139,
+      "start_time_ms": 8659,
+      "end_time_ms": 9002,
+      "vibration_stats": {
+        "mean": 1.0388000011444092,
+        "min": 0.9380000233650208,
+        "max": 1.1460000276565552
+      },
+      "faulty_probability": 0.9990448355674744,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1100,
+      "end_idx": 1149,
+      "start_time_ms": 8729,
+      "end_time_ms": 9072,
+      "vibration_stats": {
+        "mean": 1.0423399209976196,
+        "min": 0.9380000233650208,
+        "max": 1.187000036239624
+      },
+      "faulty_probability": 0.9990899562835693,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1110,
+      "end_idx": 1159,
+      "start_time_ms": 8799,
+      "end_time_ms": 9142,
+      "vibration_stats": {
+        "mean": 1.0386399030685425,
+        "min": 0.921999990940094,
+        "max": 1.187000036239624
+      },
+      "faulty_probability": 0.9990206956863403,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1120,
+      "end_idx": 1169,
+      "start_time_ms": 8869,
+      "end_time_ms": 9212,
+      "vibration_stats": {
+        "mean": 1.0490199327468872,
+        "min": 0.921999990940094,
+        "max": 1.2050000429153442
+      },
+      "faulty_probability": 0.9990068078041077,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1130,
+      "end_idx": 1179,
+      "start_time_ms": 8939,
+      "end_time_ms": 9282,
+      "vibration_stats": {
+        "mean": 1.0496200323104858,
+        "min": 0.921999990940094,
+        "max": 1.2050000429153442
+      },
+      "faulty_probability": 0.9990866184234619,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1140,
+      "end_idx": 1189,
+      "start_time_ms": 9009,
+      "end_time_ms": 9352,
+      "vibration_stats": {
+        "mean": 1.055999994277954,
+        "min": 0.921999990940094,
+        "max": 1.2050000429153442
+      },
+      "faulty_probability": 0.9989701509475708,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1150,
+      "end_idx": 1199,
+      "start_time_ms": 9079,
+      "end_time_ms": 9422,
+      "vibration_stats": {
+        "mean": 1.0460600852966309,
+        "min": 0.8920000195503235,
+        "max": 1.2070000171661377
+      },
+      "faulty_probability": 0.9990386962890625,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1160,
+      "end_idx": 1209,
+      "start_time_ms": 9149,
+      "end_time_ms": 9492,
+      "vibration_stats": {
+        "mean": 1.0511200428009033,
+        "min": 0.8920000195503235,
+        "max": 1.2070000171661377
+      },
+      "faulty_probability": 0.9990673661231995,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1170,
+      "end_idx": 1219,
+      "start_time_ms": 9219,
+      "end_time_ms": 9562,
+      "vibration_stats": {
+        "mean": 1.0434399843215942,
+        "min": 0.8920000195503235,
+        "max": 1.2070000171661377
+      },
+      "faulty_probability": 0.9990382194519043,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1180,
+      "end_idx": 1229,
+      "start_time_ms": 9289,
+      "end_time_ms": 9632,
+      "vibration_stats": {
+        "mean": 1.0384399890899658,
+        "min": 0.8920000195503235,
+        "max": 1.2070000171661377
+      },
+      "faulty_probability": 0.9990787506103516,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1190,
+      "end_idx": 1239,
+      "start_time_ms": 9359,
+      "end_time_ms": 9702,
+      "vibration_stats": {
+        "mean": 1.0355199575424194,
+        "min": 0.8920000195503235,
+        "max": 1.2070000171661377
+      },
+      "faulty_probability": 0.9990515112876892,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1200,
+      "end_idx": 1249,
+      "start_time_ms": 9429,
+      "end_time_ms": 9772,
+      "vibration_stats": {
+        "mean": 1.0371800661087036,
+        "min": 0.9139999747276306,
+        "max": 1.1679999828338623
+      },
+      "faulty_probability": 0.9990690350532532,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1210,
+      "end_idx": 1259,
+      "start_time_ms": 9499,
+      "end_time_ms": 9842,
+      "vibration_stats": {
+        "mean": 1.0389199256896973,
+        "min": 0.9139999747276306,
+        "max": 1.1770000457763672
+      },
+      "faulty_probability": 0.999068558216095,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1220,
+      "end_idx": 1269,
+      "start_time_ms": 9569,
+      "end_time_ms": 9912,
+      "vibration_stats": {
+        "mean": 1.039139986038208,
+        "min": 0.9139999747276306,
+        "max": 1.1770000457763672
+      },
+      "faulty_probability": 0.9990518689155579,
+      "predicted_label": 1
+    },
+    {
+      "start_idx": 1230,
+      "end_idx": 1279,
+      "start_time_ms": 9639,
+      "end_time_ms": 9982,
+      "vibration_stats": {
+        "mean": 1.042240023612976,
+        "min": 0.9229999780654907,
+        "max": 1.1770000457763672
+      },
+      "faulty_probability": 0.9990390539169312,
+      "predicted_label": 1
+    }
+  ]
+}

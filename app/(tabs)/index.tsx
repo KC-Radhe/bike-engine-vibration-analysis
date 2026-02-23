@@ -1,18 +1,18 @@
 import {
-  AlertTriangle,
-  CheckCircle2,
-  LogOut,
-  RefreshCw,
+    AlertTriangle,
+    CheckCircle2,
+    LogOut,
+    RefreshCw,
 } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SimulatorButton } from "../../components/SimulatorButton";
@@ -20,9 +20,11 @@ import { useAuth } from "../../contexts/AuthContext";
 import { FirestoreService } from "../../services/firestoreService";
 import { HealthSummary, VibrationLog } from "../../types/database";
 import {
-  registerForPushNotificationsAsync,
-  sendLocalNotification,
+    registerForPushNotificationsAsync,
+    sendLocalNotification,
 } from "../../utils/registerForPushNotifications";
+import { VibrationChart } from "./../../components/VibrationsChart";
+import realVibrationData from "./../../unseen_inference_output.json";
 
 export default function DashboardScreen() {
   const { signOut, user } = useAuth();
@@ -32,6 +34,9 @@ export default function DashboardScreen() {
     null,
   );
   const [latestLog, setLatestLog] = useState<VibrationLog | null>(null);
+  const [recentLogs, setRecentLogs] = useState<VibrationLog[]>([]);
+
+  console.log("real vibration data: ", realVibrationData.overall);
 
   const currentStatus = latestLog?.healthStatus || null;
 
@@ -39,12 +44,14 @@ export default function DashboardScreen() {
     if (!user) return;
 
     try {
-      const [summary, log] = await Promise.all([
+      const [summary, log, recentLogs] = await Promise.all([
         FirestoreService.getTodayHealthSummary(user.uid),
         FirestoreService.getLatestVibrationLog(user.uid),
+        FirestoreService.getRecentVibrationLogs(user.uid, 20),
       ]);
       setHealthSummary(summary);
       setLatestLog(log);
+      setRecentLogs(recentLogs);
     } catch (error) {
       console.error("Error loading dashboad data: ", error);
     } finally {
@@ -307,6 +314,9 @@ export default function DashboardScreen() {
             </View>
           </View>
         </View>
+        {recentLogs.length > 0 && (
+          <VibrationChart logs={recentLogs} type="magnitude" />
+        )}
       </ScrollView>
       <SimulatorButton onDataSent={loadData} />
     </SafeAreaView>
