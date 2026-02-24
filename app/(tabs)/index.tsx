@@ -4,7 +4,7 @@ import {
     LogOut,
     RefreshCw,
 } from "lucide-react-native";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
     RefreshControl,
@@ -24,7 +24,6 @@ import {
     sendLocalNotification,
 } from "../../utils/registerForPushNotifications";
 import { VibrationChart } from "./../../components/VibrationsChart";
-import realVibrationData from "./../../unseen_inference_output.json";
 
 export default function DashboardScreen() {
   const { signOut, user } = useAuth();
@@ -35,8 +34,9 @@ export default function DashboardScreen() {
   );
   const [latestLog, setLatestLog] = useState<VibrationLog | null>(null);
   const [recentLogs, setRecentLogs] = useState<VibrationLog[]>([]);
+  const [useSimulated, setUseSimulated] = useState(false);
 
-  console.log("real vibration data: ", realVibrationData.overall);
+  // console.log("real vibration data: ", realVibrationData.overall);
 
   const currentStatus = latestLog?.healthStatus || null;
 
@@ -44,10 +44,13 @@ export default function DashboardScreen() {
     if (!user) return;
 
     try {
+      const collectionName = useSimulated
+        ? "vibration_simulated"
+        : "vibrationLogs"; //TODO: should change to vibration_real
       const [summary, log, recentLogs] = await Promise.all([
-        FirestoreService.getTodayHealthSummary(user.uid),
-        FirestoreService.getLatestVibrationLog(user.uid),
-        FirestoreService.getRecentVibrationLogs(user.uid, 20),
+        FirestoreService.getTodayHealthSummary(user.uid, collectionName),
+        FirestoreService.getLatestVibrationLog(user.uid, collectionName),
+        FirestoreService.getRecentVibrationLogs(user.uid, collectionName, 20),
       ]);
       setHealthSummary(summary);
       setLatestLog(log);
@@ -58,7 +61,7 @@ export default function DashboardScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [user]);
+  }, [user, useSimulated]);
 
   useEffect(() => {
     registerForPushNotificationsAsync();
@@ -66,16 +69,43 @@ export default function DashboardScreen() {
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+  }, [loadData, useSimulated]);
+
+  // TODO: NOTIFICATION SENT ON FIRST RENDER, NEED TO SKIP FIRST RENDER
+  const prevStatusRef = useRef<string | null>(null);
+  const isFirstRender = useRef(true);
+  const prevStatusTime = useRef<number | null>(null);
+  const COOLDOWN_MS = 60 * 1000;
 
   useEffect(() => {
-    if (currentStatus === "warning" || currentStatus === "faulty") {
-      sendLocalNotification(
-        `${currentStatus}`,
-        `Engine Vibration anomaly detected!!`,
-      );
+    // console.log("firstrender: ", isFirstRender);
+    // console.log("prevstat: ", prevStatusRef);
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      prevStatusRef.current = currentStatus;
+      prevStatusTime.current = Date.now();
+      return;
     }
-  }, [currentStatus]);
+
+    if (currentStatus === "warning" || currentStatus === "faulty") {
+      const now = Date.now();
+
+      const cooldownPassed =
+        !prevStatusTime.current || now - prevStatusTime.current > COOLDOWN_MS;
+      const statusChanged = prevStatusRef.current !== currentStatus;
+
+      if (cooldownPassed || statusChanged) {
+        sendLocalNotification(
+          `${currentStatus.toUpperCase()}`,
+          `Engine Vibration anomaly detected!`,
+        );
+        prevStatusRef.current = currentStatus;
+        prevStatusTime.current = now;
+      }
+    } else {
+      prevStatusRef.current = null;
+    }
+  }, [currentStatus, COOLDOWN_MS]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -318,7 +348,10 @@ export default function DashboardScreen() {
           <VibrationChart logs={recentLogs} type="magnitude" />
         )}
       </ScrollView>
-      <SimulatorButton onDataSent={loadData} />
+      <SimulatorButton
+        onDataSent={loadData}
+        onToggleChange={(toReal) => setUseSimulated(!toReal)}
+      />
     </SafeAreaView>
   );
 }
