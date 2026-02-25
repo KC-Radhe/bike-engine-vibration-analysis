@@ -36,6 +36,7 @@ export default function DashboardScreen() {
   const [latestLog, setLatestLog] = useState<VibrationLog | null>(null);
   const [recentLogs, setRecentLogs] = useState<VibrationLog[]>([]);
   const { setUseSimulated, collectionName } = useCollection();
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // console.log("real vibration data: ", realVibrationData.overall);
 
@@ -347,9 +348,25 @@ export default function DashboardScreen() {
           <VibrationChart logs={recentLogs} type="magnitude" />
         )}
       </ScrollView>
+      {isTransitioning && (
+        <View style={styles.transitionOverlay} pointerEvents="none">
+          <View style={styles.transitionCard}>
+            <ActivityIndicator size="large" color="#2563eb" />
+            <Text style={styles.transitionOverlayText}>
+              Switching data source...
+            </Text>
+          </View>
+        </View>
+      )}
       <SimulatorButton
         onDataSent={loadData}
-        onToggleChange={(toReal) => setUseSimulated(!toReal)}
+        onToggleChange={async (toReal, onDone) => {
+          setIsTransitioning(true);
+          setUseSimulated(!toReal);
+          await loadData();
+          setIsTransitioning(false);
+          onDone();
+        }}
       />
     </SafeAreaView>
   );
@@ -540,5 +557,31 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#1e293b",
+  },
+  transitionOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(248, 250, 252, 0.82)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
+  },
+  transitionCard: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 32,
+    alignItems: "center",
+    gap: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 2,
+    borderColor: "#2563eb",
+  },
+  transitionOverlayText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#2563eb",
   },
 });

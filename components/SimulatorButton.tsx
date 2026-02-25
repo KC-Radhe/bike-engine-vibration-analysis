@@ -16,7 +16,7 @@ import { genereateSimulatedData } from "../utils/sensorSimulator";
 
 interface SimulatorButtonProps {
   onDataSent?: () => void;
-  onToggleChange?: (toReal: boolean) => void;
+  onToggleChange?: (toReal: boolean, onDone: () => void) => void;
 }
 
 export function SimulatorButton({
@@ -54,8 +54,8 @@ export function SimulatorButton({
 
   const handleToggle = async (toReal: boolean) => {
     setMessage("");
+    setLoading(true);
     if (toReal && user) {
-      setLoading(true);
       setMessage("Cleaning up Simulated data...");
       const result = await SensorService.deleteSimulatedData(user.uid);
       if (result.success) {
@@ -67,8 +67,9 @@ export function SimulatorButton({
       //TODO: Load registered sensors
     }
     setUseRealSensors(toReal);
-    onToggleChange?.(toReal);
-    setLoading(false);
+    onToggleChange?.(toReal, () => {
+      setLoading(false);
+    });
   };
 
   const startRealSensorMonitoring = () => {};
@@ -118,9 +119,11 @@ export function SimulatorButton({
               />
             </View>
             <Text style={styles.modalSubtitle}>
-              {useRealSensors
-                ? "Connect to hardware sensors"
-                : "Test the app with simulated sensor data"}
+              {loading
+                ? "Switching data"
+                : useRealSensors
+                  ? "Connect to hardware sensors"
+                  : "Test the app with simulated sensor data"}
             </Text>
 
             {message ? (
@@ -130,10 +133,17 @@ export function SimulatorButton({
             ) : null}
 
             {loading && (
-              <ActivityIndicator color="#2563eb" style={{ marginBottom: 12 }} />
+              <View style={styles.transitionLoading}>
+                <ActivityIndicator color="#2563eb" size="large" />
+                <Text style={styles.transitionText}>
+                  {useRealSensors
+                    ? "Loading real sensor data..."
+                    : "Loading simulated data..."}
+                </Text>
+              </View>
             )}
 
-            {useRealSensors ? (
+            {!loading && useRealSensors && (
               <View style={styles.buttonContainer}>
                 {!isMonitoring ? (
                   <TouchableOpacity
@@ -141,18 +151,12 @@ export function SimulatorButton({
                     onPress={startRealSensorMonitoring}
                     disabled={loading}
                   >
-                    {loading ? (
-                      <ActivityIndicator color="#fff" />
-                    ) : (
-                      <>
-                        <Text style={styles.simButtonText}>
-                          Start Monitoring
-                        </Text>
-                        <Text style={styles.simButtonSubtext}>
-                          Begin collecting real sensor data
-                        </Text>
-                      </>
-                    )}
+                    <>
+                      <Text style={styles.simButtonText}>Start Monitoring</Text>
+                      <Text style={styles.simButtonSubtext}>
+                        Begin collecting real sensor data
+                      </Text>
+                    </>
                   </TouchableOpacity>
                 ) : (
                   <TouchableOpacity
@@ -166,50 +170,46 @@ export function SimulatorButton({
                   </TouchableOpacity>
                 )}
               </View>
-            ) : (
+            )}
+
+            {!loading && !useRealSensors && (
               <View style={styles.buttonContainer}>
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <>
-                    <TouchableOpacity
-                      style={[styles.simButton, styles.healthyButton]}
-                      onPress={() => simulateData("healthy")}
-                      disabled={loading}
-                    >
-                      <>
-                        <Text style={styles.simButtonText}>Healthy Data</Text>
-                        <Text style={styles.simButtonSubtext}>
-                          Low Vibration
-                        </Text>
-                      </>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.simButton, styles.warningButton]}
-                      onPress={() => simulateData("warning")}
-                      disabled={loading}
-                    >
-                      <>
-                        <Text style={styles.simButtonText}>Warning Data</Text>
-                        <Text style={styles.simButtonSubtext}>
-                          Medium Vibration
-                        </Text>
-                      </>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.simButton, styles.faultyButon]}
-                      onPress={() => simulateData("faulty")}
-                      disabled={loading}
-                    >
-                      <>
-                        <Text style={styles.simButtonText}>Faulty Data</Text>
-                        <Text style={styles.simButtonSubtext}>
-                          High Vibration
-                        </Text>
-                      </>
-                    </TouchableOpacity>
-                  </>
-                )}
+                <>
+                  <TouchableOpacity
+                    style={[styles.simButton, styles.healthyButton]}
+                    onPress={() => simulateData("healthy")}
+                    disabled={loading}
+                  >
+                    <>
+                      <Text style={styles.simButtonText}>Healthy Data</Text>
+                      <Text style={styles.simButtonSubtext}>Low Vibration</Text>
+                    </>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.simButton, styles.warningButton]}
+                    onPress={() => simulateData("warning")}
+                    disabled={loading}
+                  >
+                    <>
+                      <Text style={styles.simButtonText}>Warning Data</Text>
+                      <Text style={styles.simButtonSubtext}>
+                        Medium Vibration
+                      </Text>
+                    </>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.simButton, styles.faultyButon]}
+                    onPress={() => simulateData("faulty")}
+                    disabled={loading}
+                  >
+                    <>
+                      <Text style={styles.simButtonText}>Faulty Data</Text>
+                      <Text style={styles.simButtonSubtext}>
+                        High Vibration
+                      </Text>
+                    </>
+                  </TouchableOpacity>
+                </>
               </View>
             )}
           </View>
@@ -336,5 +336,15 @@ const styles = StyleSheet.create({
   },
   stopButton: {
     backgroundColor: "#ef4444",
+  },
+  transitionLoading: {
+    alignItems: "center",
+    paddingVertical: 28,
+    gap: 12,
+  },
+  transitionText: {
+    fontSize: 14,
+    color: "#2563eb",
+    fontWeight: "500",
   },
 });
