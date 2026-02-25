@@ -56,7 +56,7 @@ export function SimulatorButton({
     setMessage("");
     if (toReal && user) {
       setLoading(true);
-      setMessage("Cleaning up simulated data…");
+      setMessage("Cleaning up Simulated data...");
       const result = await SensorService.deleteSimulatedData(user.uid);
       if (result.success) {
         setMessage(`Deleted ${result.deleted} simulated records.`);
@@ -168,52 +168,48 @@ export function SimulatorButton({
               </View>
             ) : (
               <View style={styles.buttonContainer}>
-                <TouchableOpacity
-                  style={[styles.simButton, styles.healthyButton]}
-                  onPress={() => simulateData("healthy")}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <>
-                      <Text style={styles.simButtonText}>Healthy Data</Text>
-                      <Text style={styles.simButtonSubtext}>Low Vibration</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.simButton, styles.warningButton]}
-                  onPress={() => simulateData("warning")}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <>
-                      <Text style={styles.simButtonText}>Warning Data</Text>
-                      <Text style={styles.simButtonSubtext}>
-                        Medium Vibration
-                      </Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.simButton, styles.faultyButon]}
-                  onPress={() => simulateData("faulty")}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <>
-                      <Text style={styles.simButtonText}>Faulty Data</Text>
-                      <Text style={styles.simButtonSubtext}>
-                        High Vibration
-                      </Text>
-                    </>
-                  )}
-                </TouchableOpacity>
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <>
+                    <TouchableOpacity
+                      style={[styles.simButton, styles.healthyButton]}
+                      onPress={() => simulateData("healthy")}
+                      disabled={loading}
+                    >
+                      <>
+                        <Text style={styles.simButtonText}>Healthy Data</Text>
+                        <Text style={styles.simButtonSubtext}>
+                          Low Vibration
+                        </Text>
+                      </>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.simButton, styles.warningButton]}
+                      onPress={() => simulateData("warning")}
+                      disabled={loading}
+                    >
+                      <>
+                        <Text style={styles.simButtonText}>Warning Data</Text>
+                        <Text style={styles.simButtonSubtext}>
+                          Medium Vibration
+                        </Text>
+                      </>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.simButton, styles.faultyButon]}
+                      onPress={() => simulateData("faulty")}
+                      disabled={loading}
+                    >
+                      <>
+                        <Text style={styles.simButtonText}>Faulty Data</Text>
+                        <Text style={styles.simButtonSubtext}>
+                          High Vibration
+                        </Text>
+                      </>
+                    </TouchableOpacity>
+                  </>
+                )}
               </View>
             )}
           </View>

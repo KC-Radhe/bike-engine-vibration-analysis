@@ -24,7 +24,6 @@ import {
   sendLocalNotification,
 } from "../../utils/registerForPushNotifications";
 import { VibrationChart } from "./../../components/VibrationsChart";
-
 import { useCollection } from "./_layout";
 
 export default function DashboardScreen() {

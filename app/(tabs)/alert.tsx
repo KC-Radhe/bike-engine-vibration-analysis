@@ -45,38 +45,48 @@ export default function AlertScreen() {
 
   useEffect(() => {
     if (!user) return;
-    const queryRef = query(
+    setLoading(true);
+
+    const queryObj = query(
       collection(db, alertCol),
       where("userId", "==", user.uid),
       where("isDismissed", "==", false),
       orderBy("createdAt", "desc"),
     );
 
-    const unsubscribe = onSnapshot(queryRef, (snapshot) => {
-      const alertsData: Alert[] = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          userId: data.userId,
-          alertType: data.alertType,
-          severity: data.severity,
-          title: data.title,
-          message: data.message,
-          vibraionLogId: data.vibrationLogId,
-          isRead: data.isRead,
-          isDismissed: data.isDismissed,
-          createdAt: data.createdAt?.toDate(),
-        };
-      });
+    const unsubscribe = onSnapshot(
+      queryObj,
+      (snapshot) => {
+        const alertsData: Alert[] = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            userId: data.userId,
+            alertType: data.alertType,
+            severity: data.severity,
+            title: data.title,
+            message: data.message,
+            vibraionLogId: data.vibrationLogId,
+            isRead: data.isRead,
+            isDismissed: data.isDismissed,
+            createdAt: data.createdAt?.toDate(),
+          };
+        });
 
-      setAlerts(alertsData);
-      applyFilter(alertsData, filter);
-      setLoading(false);
-      setRefreshing(false);
-    });
+        setAlerts(alertsData);
+        applyFilter(alertsData, filter);
+        setLoading(false);
+        setRefreshing(false);
+      },
+      (error) => {
+        console.error("Error listening to alert logs:", error);
+        setLoading(false);
+        setRefreshing(false);
+      },
+    );
 
     return () => unsubscribe();
-  }, [user, alertCol]);
+  }, [user, alertCol, filter]);
 
   const applyFilter = (alertsData: Alert[], filterType: "all" | "unread") => {
     if (filterType === "unread") {
@@ -84,11 +94,12 @@ export default function AlertScreen() {
     } else {
       setFilteredAlerts(alertsData);
     }
+    setRefreshing(false);
   };
 
   useEffect(() => {
     applyFilter(alerts, filter);
-  }, [filter]);
+  }, [filter, alerts]);
 
   const onRefresh = () => {
     setRefreshing(true);

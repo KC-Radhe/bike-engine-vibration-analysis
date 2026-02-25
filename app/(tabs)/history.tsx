@@ -1,4 +1,10 @@
-import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  orderBy,
+  query,
+  where,
+} from "firebase/firestore";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -30,43 +36,50 @@ export default function HistoryScreen() {
   const [filter, setFilter] = useState<string | "all">("all");
   const { collectionName } = useCollection();
 
-  const loadLogs = async () => {
+  useEffect(() => {
     if (!user) return;
+    setLoading(true);
 
-    try {
-      const queryObj = query(
-        collection(db, collectionName),
-        where("userId", "==", user.uid),
-        orderBy("timestamp", "desc"),
-      );
+    const queryObj = query(
+      collection(db, collectionName),
+      where("userId", "==", user.uid),
+      orderBy("timestamp", "desc"),
+    );
 
-      const querySnapshot = await getDocs(queryObj);
-      const logsData: VibrationLog[] = querySnapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          userId: data.userId,
-          timestamp: data.timestamp?.toDate(),
-          vibrationX: data.vibrationX,
-          vibrationY: data.vibrationY,
-          vibrationZ: data.vibrationZ,
-          magnitude: data.magnitude,
-          frequency: data.frequency,
-          healthStatus: data.healthStatus,
-          confidenceLevel: data.confidenceLevel,
-          createdAt: data.createdAt?.toDate(),
-        };
-      });
+    const unsubscribe = onSnapshot(
+      queryObj,
+      (querySnapshot) => {
+        const logsData: VibrationLog[] = querySnapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            userId: data.userId,
+            timestamp: data.timestamp?.toDate(),
+            vibrationX: data.vibrationX,
+            vibrationY: data.vibrationY,
+            vibrationZ: data.vibrationZ,
+            magnitude: data.magnitude,
+            frequency: data.frequency,
+            healthStatus: data.healthStatus,
+            confidenceLevel: data.confidenceLevel,
+            createdAt: data.createdAt?.toDate(),
+          };
+        });
 
-      setLogs(logsData);
-      applyFilter(logsData, filter);
-    } catch (error) {
-      console.error(`Error on loading logs: ${error}`);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+        setLogs(logsData);
+        applyFilter(logsData, filter);
+        setLoading(false);
+        setRefreshing(false);
+      },
+      (error) => {
+        console.error("Error listening to history logs:", error);
+        setLoading(false);
+        setRefreshing(false);
+      },
+    );
+
+    return () => unsubscribe();
+  }, [user, collectionName, filter]);
 
   const applyFilter = (logsData: VibrationLog[], filter: string | "all") => {
     if (filter === "all") {
@@ -74,11 +87,8 @@ export default function HistoryScreen() {
     } else {
       setFilteredLogs(logsData.filter((log) => log.healthStatus === filter));
     }
+    setRefreshing(false);
   };
-
-  useEffect(() => {
-    loadLogs();
-  }, [user, collectionName, loadLogs]);
 
   useEffect(() => {
     applyFilter(logs, filter);
@@ -86,7 +96,7 @@ export default function HistoryScreen() {
 
   const onRefresh = () => {
     setRefreshing(true);
-    loadLogs();
+    applyFilter(logs, filter);
   };
 
   const getStatusColor = (status: string) => {
