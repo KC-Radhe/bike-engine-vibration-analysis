@@ -12,6 +12,8 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { FirestoreService } from "../services/firestoreService";
 import { SensorService } from "../services/sensorServices";
+import type { InferencePayload } from "../types/database";
+import realInference from "../unseen_inference_output.json";
 import { genereateSimulatedData } from "../utils/sensorSimulator";
 
 interface SimulatorButtonProps {
@@ -19,10 +21,7 @@ interface SimulatorButtonProps {
   onToggleChange?: (toReal: boolean, onDone: () => void) => void;
 }
 
-export function SimulatorButton({
-  onDataSent,
-  onToggleChange,
-}: SimulatorButtonProps) {
+export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonProps) {
   const { user } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -35,19 +34,20 @@ export function SimulatorButton({
     setLoading(true);
     setMessage("");
 
-    const data = genereateSimulatedData(condition);
-    const result = await FirestoreService.saveVibrationLog(
-      user.uid,
-      data,
-      "vibration_simulated",
-    );
+    // Generates data in the SAME shape as the inference JSON payload
+    const payload = genereateSimulatedData(condition);
 
-    if (result.success) {
+    // Save only ONCE (fix: today's overview count must increment by 1)
+    const colName = "vibration_simulate";
+
+    const r1 = await FirestoreService.saveVibrationLog(user.uid, payload, colName);
+
+    if (r1.success) {
       const c = condition.charAt(0).toUpperCase() + condition.slice(1);
       setMessage(`${c} data sent successfully.`);
       onDataSent?.();
     } else {
-      setMessage(`Error: ${result.error}`);
+      setMessage(`Error: ${r1.error}`);
     }
     setLoading(false);
   };
@@ -55,6 +55,8 @@ export function SimulatorButton({
   const handleToggle = async (toReal: boolean) => {
     setMessage("");
     setLoading(true);
+
+    // IMPORTANT: keep delete behavior (when toggling back to Real)
     if (toReal && user) {
       setMessage("Cleaning up Simulated data...");
       const result = await SensorService.deleteSimulatedData(user.uid);
@@ -63,17 +65,49 @@ export function SimulatorButton({
       } else {
         setMessage(`Cleanup warning: ${result.error}`);
       }
-
-      //TODO: Load registered sensors
     }
+
     setUseRealSensors(toReal);
     onToggleChange?.(toReal, () => {
       setLoading(false);
     });
   };
 
-  const startRealSensorMonitoring = () => {};
-  const stopRealSensorMonitoring = () => {};
+  const startRealSensorMonitoring = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    setMessage("");
+    setIsMonitoring(true);
+
+    try {
+      // "Real sensor" mode (for now) reads from the inference JSON bundled in the app.
+      const payload = realInference as unknown as InferencePayload;
+
+      const result = await FirestoreService.saveVibrationLog(
+        user.uid,
+        payload,
+        "vibration_real",
+      );
+
+      if (result.success) {
+        setMessage("Real sensor data saved to Firestore (vibration_real).");
+        onDataSent?.();
+      } else {
+        setMessage(`Error: ${result.error}`);
+      }
+    } catch (e: any) {
+      setMessage(`Error: ${e?.message ?? String(e)}`);
+    } finally {
+      setLoading(false);
+      setIsMonitoring(false);
+    }
+  };
+
+  const stopRealSensorMonitoring = () => {
+    setIsMonitoring(false);
+    setMessage("Monitoring stopped.");
+  };
 
   return (
     <>
@@ -106,7 +140,6 @@ export function SimulatorButton({
               Test the app with simulated sensor data
             </Text>
 
-            {/* Toggle between simulator and real sensors */}
             <View style={styles.toggleContainer}>
               <Cpu size={20} color="#64748b" strokeWidth={2} />
               <Text style={styles.toggleLabel}>Use Real Sensors</Text>
@@ -118,12 +151,13 @@ export function SimulatorButton({
                 disabled={loading}
               />
             </View>
+
             <Text style={styles.modalSubtitle}>
               {loading
                 ? "Switching data"
                 : useRealSensors
-                  ? "Connect to hardware sensors"
-                  : "Test the app with simulated sensor data"}
+                ? "Connect to hardware sensors"
+                : "Test the app with simulated sensor data"}
             </Text>
 
             {message ? (
@@ -154,7 +188,7 @@ export function SimulatorButton({
                     <>
                       <Text style={styles.simButtonText}>Start Monitoring</Text>
                       <Text style={styles.simButtonSubtext}>
-                        Begin collecting real sensor data
+                        Save inference JSON to vibration_real
                       </Text>
                     </>
                   </TouchableOpacity>
@@ -164,9 +198,7 @@ export function SimulatorButton({
                     onPress={stopRealSensorMonitoring}
                   >
                     <Text style={styles.simButtonText}>Stop Monitoring</Text>
-                    <Text style={styles.simButtonSubtext}>
-                      End data collection
-                    </Text>
+                    <Text style={styles.simButtonSubtext}>End data collection</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -182,7 +214,7 @@ export function SimulatorButton({
                   >
                     <>
                       <Text style={styles.simButtonText}>Healthy Data</Text>
-                      <Text style={styles.simButtonSubtext}>Low Vibration</Text>
+                      <Text style={styles.simButtonSubtext}>Low Fault Risk</Text>
                     </>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -192,9 +224,7 @@ export function SimulatorButton({
                   >
                     <>
                       <Text style={styles.simButtonText}>Warning Data</Text>
-                      <Text style={styles.simButtonSubtext}>
-                        Medium Vibration
-                      </Text>
+                      <Text style={styles.simButtonSubtext}>Around Threshold</Text>
                     </>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -204,9 +234,7 @@ export function SimulatorButton({
                   >
                     <>
                       <Text style={styles.simButtonText}>Faulty Data</Text>
-                      <Text style={styles.simButtonSubtext}>
-                        High Vibration
-                      </Text>
+                      <Text style={styles.simButtonSubtext}>High Fault Risk</Text>
                     </>
                   </TouchableOpacity>
                 </>
@@ -262,89 +290,86 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   modalTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "700",
     color: "#1e293b",
   },
   closeButton: {
-    padding: 4,
+    padding: 6,
   },
   modalSubtitle: {
     fontSize: 14,
     color: "#64748b",
-    marginBottom: 24,
+    marginBottom: 14,
   },
-  messageContainer: {
-    backgroundColor: "#eff6ff",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  messageText: {
-    fontSize: 14,
-    color: "#2563eb",
-    textAlign: "center",
-    fontWeight: "600",
-  },
-  buttonContainer: {
-    gap: 12,
-  },
-  simButton: {
-    padding: 20,
-    borderRadius: 16,
-    alignItems: "center",
-  },
-  healthyButton: {
-    backgroundColor: "#10b981",
-  },
-  warningButton: {
-    backgroundColor: "#f59e0b",
-  },
-  faultyButon: {
-    backgroundColor: "#ef4444",
-  },
-  simButtonText: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#fff",
-    marginBottom: 4,
-  },
-  simButtonSubtext: {
-    fontSize: 13,
-    color: "#fff",
-    opacity: 0.9,
-  },
-
   toggleContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
     backgroundColor: "#f8fafc",
+    padding: 15,
     borderRadius: 12,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   toggleLabel: {
     flex: 1,
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: 16,
+    fontWeight: "600",
     color: "#1e293b",
+    marginLeft: 10,
   },
-  startButton: {
-    backgroundColor: "#10b981",
+  messageContainer: {
+    backgroundColor: "#f1f5f9",
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 15,
   },
-  stopButton: {
-    backgroundColor: "#ef4444",
+  messageText: {
+    color: "#334155",
+    fontSize: 14,
+    textAlign: "center",
   },
   transitionLoading: {
     alignItems: "center",
-    paddingVertical: 28,
-    gap: 12,
+    paddingVertical: 20,
   },
   transitionText: {
+    marginTop: 10,
+    color: "#64748b",
     fontSize: 14,
-    color: "#2563eb",
-    fontWeight: "500",
+  },
+  buttonContainer: {
+    gap: 10,
+  },
+  simButton: {
+    padding: 16,
+    borderRadius: 12,
+  },
+  simButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  simButtonSubtext: {
+    color: "#fff",
+    fontSize: 12,
+    textAlign: "center",
+    marginTop: 4,
+    opacity: 0.9,
+  },
+  startButton: {
+    backgroundColor: "#2563eb",
+  },
+  stopButton: {
+    backgroundColor: "#dc2626",
+  },
+  healthyButton: {
+    backgroundColor: "#16a34a",
+  },
+  warningButton: {
+    backgroundColor: "#d97706",
+  },
+  faultyButon: {
+    backgroundColor: "#dc2626",
   },
 });

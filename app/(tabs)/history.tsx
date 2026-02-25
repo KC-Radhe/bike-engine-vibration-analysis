@@ -54,15 +54,18 @@ export default function HistoryScreen() {
           return {
             id: doc.id,
             userId: data.userId,
-            timestamp: data.timestamp?.toDate(),
-            vibrationX: data.vibrationX,
-            vibrationY: data.vibrationY,
-            vibrationZ: data.vibrationZ,
+            timestamp: data.timestamp?.toDate?.() ?? new Date(),
+            vibrationX: data.vibrationX ?? null,
+            vibrationY: data.vibrationY ?? null,
+            vibrationZ: data.vibrationZ ?? null,
             magnitude: data.magnitude,
             frequency: data.frequency,
             healthStatus: data.healthStatus,
             confidenceLevel: data.confidenceLevel,
-            createdAt: data.createdAt?.toDate(),
+            meanFaultyProbability: data.meanFaultyProbability,
+            minFaultyProbability: data.minFaultyProbability,
+            maxFaultyProbability: data.maxFaultyProbability,
+            createdAt: data.createdAt?.toDate?.() ?? new Date(),
           };
         });
 
@@ -289,23 +292,19 @@ export default function HistoryScreen() {
                     <View style={styles.logMetrics}>
                       <View style={styles.metricRow}>
                         <View style={styles.metric}>
-                          <Text style={styles.metricLabel}>Magnitude</Text>
+                          <Text style={styles.metricLabel}>Fault Probability</Text>
                           <Text style={styles.metricValue}>
-                            {log.magnitude.toFixed(3)} m/s²
+                            {log.meanFaultyProbability !== undefined
+                              ? `${(log.meanFaultyProbability * 100).toFixed(1)}%`
+                              : "—"}
                           </Text>
                         </View>
                         <View style={styles.metric}>
-                          <Text style={styles.metricLabel}>Frequency</Text>
+                          <Text style={styles.metricLabel}>Confidence</Text>
                           <Text style={styles.metricValue}>
-                            {log.frequency.toFixed(1)} Hz
+                            {log.confidenceLevel.toFixed(1)}%
                           </Text>
                         </View>
-                      </View>
-                      <View style={styles.confidenceRow}>
-                        <Text style={styles.confidenceLabel}>Confidence:</Text>
-                        <Text style={styles.confidenceValue}>
-                          {log.confidenceLevel.toFixed(1)}%
-                        </Text>
                       </View>
                     </View>
                   </View>

@@ -208,12 +208,23 @@ export default function DashboardScreen() {
               <>
                 Last readings:{" "}
                 <Text style={styles.metricValue}>
-                  {latestLog.magnitude.toFixed(2)}m/s²
+                  {latestLog.magnitude.toFixed(2)}g
                 </Text>{" "}
-                at{" "}
-                <Text style={styles.metricValue}>
-                  {latestLog.frequency.toFixed(2)}Hz
-                </Text>
+                {latestLog.meanFaultyProbability !== undefined ? (
+                  <>
+                    • Fault Prob{" "}
+                    <Text style={styles.metricValue}>
+                      {(latestLog.meanFaultyProbability * 100).toFixed(1)}%
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    at{" "}
+                    <Text style={styles.metricValue}>
+                      {latestLog.frequency.toFixed(2)}Hz
+                    </Text>
+                  </>
+                )}
               </>
             ) : (
               `No readings yet - Start Monitoring`
@@ -230,36 +241,73 @@ export default function DashboardScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Latest Metrics</Text>
             <View style={styles.metricsGrid}>
-              <View style={styles.metricItem}>
-                <Text style={styles.metricLabel}>Vibration X</Text>
-                <Text style={styles.metricValue}>
-                  {latestLog.vibrationX.toFixed(3)}m/s²
-                </Text>
-              </View>
-              <View style={styles.metricItem}>
-                <Text style={styles.metricLabel}>Vibration Y</Text>
-                <Text style={styles.metricValue}>
-                  {latestLog.vibrationY.toFixed(3)}m/s²
-                </Text>
-              </View>
-              <View style={styles.metricItem}>
-                <Text style={styles.metricLabel}>Vibration Z</Text>
-                <Text style={styles.metricValue}>
-                  {latestLog.vibrationZ.toFixed(3)}m/s²
-                </Text>
-              </View>
+              {latestLog.vibrationX !== null ? (
+                <>
+                  <View style={styles.metricItem}>
+                    <Text style={styles.metricLabel}>Vibration X</Text>
+                    <Text style={styles.metricValue}>
+                      {latestLog.vibrationX.toFixed(3)}g
+                    </Text>
+                  </View>
+                  <View style={styles.metricItem}>
+                    <Text style={styles.metricLabel}>Vibration Y</Text>
+                    <Text style={styles.metricValue}>
+                      {(latestLog.vibrationY ?? 0).toFixed(3)}g
+                    </Text>
+                  </View>
+                  <View style={styles.metricItem}>
+                    <Text style={styles.metricLabel}>Vibration Z</Text>
+                    <Text style={styles.metricValue}>
+                      {(latestLog.vibrationZ ?? 0).toFixed(3)}g
+                    </Text>
+                  </View>
+                </>
+              ) : (
+                <>
+                  <View style={styles.metricItem}>
+                    <Text style={styles.metricLabel}>Vibration Mean</Text>
+                    <Text style={styles.metricValue}>
+                      {(
+                        (latestLog.overallVibrationMean ?? latestLog.magnitude)
+                      ).toFixed(3)}
+                      g
+                    </Text>
+                  </View>
+                  <View style={styles.metricItem}>
+                    <Text style={styles.metricLabel}>Vibration Min</Text>
+                    <Text style={styles.metricValue}>
+                      {(latestLog.overallVibrationMin ?? 0).toFixed(3)}g
+                    </Text>
+                  </View>
+                  <View style={styles.metricItem}>
+                    <Text style={styles.metricLabel}>Vibration Max</Text>
+                    <Text style={styles.metricValue}>
+                      {(latestLog.overallVibrationMax ?? 0).toFixed(3)}g
+                    </Text>
+                  </View>
+                </>
+              )}
               <View style={styles.metricItem}>
                 <Text style={styles.metricLabel}>Magnitude</Text>
                 <Text style={styles.metricValue}>
-                  {latestLog.magnitude.toFixed(3)}m/s²
+                  {latestLog.magnitude.toFixed(3)}g
                 </Text>
               </View>
-              <View style={styles.metricItem}>
-                <Text style={styles.metricLabel}>Frequency</Text>
-                <Text style={styles.metricValue}>
-                  {latestLog.frequency.toFixed(1)}Hz
-                </Text>
-              </View>
+              {latestLog.meanFaultyProbability !== undefined ? (
+                <View style={styles.metricItem}>
+                  <Text style={styles.metricLabel}>Fault Probability</Text>
+                  <Text style={styles.metricValue}>
+                    {(latestLog.meanFaultyProbability * 100).toFixed(1)}%
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.metricItem}>
+                  <Text style={styles.metricLabel}>Frequency</Text>
+                  <Text style={styles.metricValue}>
+                    {latestLog.frequency.toFixed(1)}Hz
+                  </Text>
+                </View>
+              )}
               <View style={styles.metricItem}>
                 <Text style={styles.metricLabel}>Confidence</Text>
                 <Text style={styles.metricValue}>
@@ -333,13 +381,13 @@ export default function DashboardScreen() {
             <View style={styles.statCard}>
               <Text style={styles.statLabel}>Avg Vibration</Text>
               <Text style={styles.statValue}>
-                {healthSummary?.avgVibration.toFixed(2) || "0.00"}m/s²
+                {healthSummary?.avgVibration.toFixed(2) || "0.00"}g
               </Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statLabel}>Avg Frequency</Text>
+              <Text style={styles.statLabel}>Confidence</Text>
               <Text style={styles.statValue}>
-                {healthSummary?.avgFrequency.toFixed(2) || "0.00"}Hz
+                {(latestLog?.confidenceLevel ?? 0).toFixed(1)}%
               </Text>
             </View>
           </View>

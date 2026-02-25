@@ -30,9 +30,7 @@ export class SensorService {
 
       await deleteFromCollection("healthSummaries_simulated");
       await deleteFromCollection("alerts_simulated");
-      const deletedVibrations = await deleteFromCollection(
-        "vibration_simulated",
-      );
+      const deletedVibrations = await deleteFromCollection("vibration_simulate");
       return { success: true, deleted: deletedVibrations };
     } catch (e: any) {
       return { success: false, deleted: 0, error: e.message };

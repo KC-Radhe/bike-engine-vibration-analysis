@@ -41,7 +41,7 @@ export default function AlertScreen() {
   const { collectionName } = useCollection();
 
   const alertCol =
-    collectionName === "vibrationLogs" ? "alerts" : "alerts_simulated";
+    collectionName === "vibration_real" ? "alerts" : "alerts_simulated";
 
   useEffect(() => {
     if (!user) return;

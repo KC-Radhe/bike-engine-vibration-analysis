@@ -11,19 +11,22 @@ import {
   setDoc,
   updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { Alert, HealthSummary, VibrationLog } from "../types/database";
+import { Alert, HealthSummary, VibrationLog, InferencePayload } from "../types/database";
 
 export class FirestoreService {
   static async saveVibrationLog(
     userId: string,
-    data: {
-      vibrationX: number;
-      vibrationY: number;
-      vibrationZ: number;
-      frequency: number;
-    },
+    data:
+      | {
+          vibrationX: number;
+          vibrationY: number;
+          vibrationZ: number;
+          frequency: number;
+        }
+      | InferencePayload,
     colName: string,
   ): Promise<{
     success: boolean;
@@ -31,17 +34,114 @@ export class FirestoreService {
     error?: string;
   }> {
     try {
+      // Supports TWO formats:
+      // 1) Raw sensor reading: { vibrationX, vibrationY, vibrationZ, frequency }
+      // 2) Inference payload JSON: { generated_at, overall, windows[], ... }
+
+      const isInferencePayload =
+        data &&
+        typeof data === "object" &&
+        "overall" in data &&
+        "windows" in data &&
+        Array.isArray((data as InferencePayload).windows);
+
+      // ---------------- Inference payload branch ----------------
+      if (isInferencePayload) {
+        const payload = data as InferencePayload;
+        const ps = payload.overall.probability_stats;
+        const vs = payload.overall.vibration_stats;
+
+        const magnitude = vs.mean; // representative vibration level
+        const frequency = 0; // frequency not present in inference JSON
+        const healthStatus =
+          ps.mean_faulty_probability >= ps.threshold_used ? "faulty" : "healthy";
+        const confidenceLevel = ps.mean_faulty_probability * 100;
+
+        const vibrationLogRef = await addDoc(collection(db, colName), {
+          timestamp: serverTimestamp(),
+          userId,
+
+          // Keep legacy fields so existing UI doesn’t crash
+          vibrationX: null,
+          vibrationY: null,
+          vibrationZ: null,
+
+          magnitude,
+          frequency,
+          healthStatus,
+          confidenceLevel,
+
+          // Inference-specific fields for UI
+          generatedAt: payload.generated_at,
+          thresholdUsed: ps.threshold_used,
+          meanFaultyProbability: ps.mean_faulty_probability,
+          minFaultyProbability: ps.min_faulty_probability,
+          maxFaultyProbability: ps.max_faulty_probability,
+          totalWindows: ps.total_windows,
+          predictedFaultyWindows: ps.predicted_faulty_windows,
+          predictedHealthyWindows: ps.predicted_healthy_windows,
+          overallVibrationMean: vs.mean,
+          overallVibrationMin: vs.min,
+          overallVibrationMax: vs.max,
+
+          createdAt: serverTimestamp(),
+        });
+
+        // Save window timeline as subcollection: {colName}/{logId}/windows
+        const batch = writeBatch(db);
+        const windowsCol = collection(vibrationLogRef, "windows");
+        for (const w of payload.windows) {
+          const wRef = doc(windowsCol);
+          batch.set(wRef, {
+            startIdx: w.start_idx,
+            endIdx: w.end_idx,
+            startTimeMs: w.start_time_ms,
+            endTimeMs: w.end_time_ms,
+            vibrationMean: w.vibration_stats.mean,
+            vibrationMin: w.vibration_stats.min,
+            vibrationMax: w.vibration_stats.max,
+            faultyProbability: w.faulty_probability,
+            predictedLabel: w.predicted_label,
+          });
+        }
+        await batch.commit();
+
+        await this.updateHealthSummary(
+          userId,
+          { magnitude, frequency, healthStatus },
+          colName,
+        );
+
+        if (healthStatus === "faulty") {
+          await this.createAlert(
+            userId,
+            { magnitude, healthStatus, vibrationLogId: vibrationLogRef.id },
+            colName,
+          );
+        }
+
+        return { success: true, logId: vibrationLogRef.id };
+      }
+
+      // ---------------- Raw sensor reading branch (existing logic) ----------------
+      const raw = data as {
+        vibrationX: number;
+        vibrationY: number;
+        vibrationZ: number;
+        frequency: number;
+      };
+
       const magnitude = Math.sqrt(
-        data.vibrationX ** 2 + data.vibrationY ** 2 + data.vibrationZ ** 2,
+        raw.vibrationX ** 2 + raw.vibrationY ** 2 + raw.vibrationZ ** 2,
       );
 
       let healthStatus: string;
       let confidenceLevel: number;
 
-      if (magnitude < 3.5 && data.frequency < 35) {
+      if (magnitude < 3.5 && raw.frequency < 35) {
         healthStatus = "healthy";
         confidenceLevel = 95 + Math.random() * 5;
-      } else if (magnitude < 8.5 && data.frequency < 70) {
+      } else if (magnitude < 8.5 && raw.frequency < 70) {
         healthStatus = "warning";
         confidenceLevel = 75 + Math.random() * 15;
       } else {
@@ -52,47 +152,37 @@ export class FirestoreService {
       const vibrationLogRef = await addDoc(collection(db, colName), {
         timestamp: serverTimestamp(),
         userId,
-        vibrationX: data.vibrationX,
-        vibrationY: data.vibrationY,
-        vibrationZ: data.vibrationZ,
+        vibrationX: raw.vibrationX,
+        vibrationY: raw.vibrationY,
+        vibrationZ: raw.vibrationZ,
         magnitude,
-        frequency: data.frequency,
+        frequency: raw.frequency,
         healthStatus,
         confidenceLevel,
         createdAt: serverTimestamp(),
       });
 
-      //update engine health summary
       await this.updateHealthSummary(
         userId,
-        {
-          magnitude,
-          frequency: data.frequency,
-          healthStatus,
-        },
+        { magnitude, frequency: raw.frequency, healthStatus },
         colName,
       );
 
-      //create alert if needed
       if (
         healthStatus === "faulty" ||
         (healthStatus === "warning" && magnitude > 3.5)
       ) {
         await this.createAlert(
           userId,
-          {
-            magnitude,
-            healthStatus,
-            vibrationLogId: vibrationLogRef.id,
-          },
+          { magnitude, healthStatus, vibrationLogId: vibrationLogRef.id },
           colName,
         );
       }
 
       return { success: true, logId: vibrationLogRef.id };
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error on saving vibration log: ${error}`);
-      return { success: false, error: error.message };
+      return { success: false, error: error?.message ?? String(error) };
     }
   }
 
@@ -110,24 +200,23 @@ export class FirestoreService {
     let title: string;
     let message: string;
 
-    const alertCol =
-      colName === "vibrationLogs" ? "alerts" : "alerts_simulated";
+    const alertCol = colName === "vibration_real" ? "alerts" : "alerts_simulated";
 
     if (data.healthStatus === "faulty") {
       alertType = "fault_detected";
       severity = "critical";
       title = "Critical Engine Fault Detected";
-      message = `Engine fault detected with ${data.magnitude.toFixed(2)}m/s² vibration.\nIMMEDIATE ATTENTION REQUIRED.`;
+      message = `Engine fault detected with ${data.magnitude.toFixed(2)}g vibration.\nIMMEDIATE ATTENTION REQUIRED.`;
     } else if (data.magnitude > 7) {
       alertType = "critical";
       severity = "high";
       title = "High Vibration Warning";
-      message = `Unusual vibration levels detected (${data.magnitude.toFixed(2)}m/s²).\nCONSIDER INSPECTION`;
+      message = `Unusual vibration levels detected (${data.magnitude.toFixed(2)}g).\nCONSIDER INSPECTION`;
     } else {
       alertType = "high_vibration";
       severity = "medium";
       title = "May Fault Warning";
-      message = `Engine may fault warning with ${data.magnitude.toFixed(2)}m/s² vibration.\nMONITOR CLOSELY`;
+      message = `Engine may fault warning with ${data.magnitude.toFixed(2)}g vibration.\nMONITOR CLOSELY`;
     }
 
     await addDoc(collection(db, alertCol), {
@@ -155,9 +244,7 @@ export class FirestoreService {
     const today = new Date().toISOString().split("T")[0];
     const healthSummaryRef = doc(
       db,
-      colName === "vibrationLogs"
-        ? "healthSummaries"
-        : "healthSummaries_simulated",
+      colName === "vibration_real" ? "healthSummaries" : "healthSummaries_simulated",
       `${userId}_${today}`,
     );
     const healthSummaryDoc = await getDoc(healthSummaryRef);
@@ -179,7 +266,6 @@ export class FirestoreService {
         faultyCount: data.healthStatus === "faulty" ? 1 : 0,
         avgVibration: data.magnitude,
         maxVibration: data.magnitude,
-        avgFrequency: data.frequency,
         overallHealthLevel: initialHealthLevel,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -205,11 +291,6 @@ export class FirestoreService {
       oldHealthSummary.maxVibration,
       data.magnitude,
     );
-    const newAvgFrequency =
-      (oldHealthSummary.avgFrequency * oldHealthSummary.totalReadings +
-        data.frequency) /
-      newTotalReadings;
-
     const healthyPercentage = (newHealthyCount / newTotalReadings) * 100;
     const warningPenalty = (newWarningCount / newTotalReadings) * 20;
     const faultyPenalty = (newFaultyCount / newTotalReadings) * 60;
@@ -226,7 +307,6 @@ export class FirestoreService {
       faultyCount: newFaultyCount,
       avgVibration: newAvgVibration,
       maxVibration: newMaxVibration,
-      avgFrequency: newAvgFrequency,
       overallHealthLevel: newHealthLevel,
       updatedAt: serverTimestamp(),
     });
@@ -241,9 +321,7 @@ export class FirestoreService {
       const today = new Date().toISOString().split("T")[0];
       const healthSummaryRef = doc(
         db,
-        colName === "vibrationLogs"
-          ? "healthSummaries"
-          : "healthSummaries_simulated",
+        colName === "vibration_real" ? "healthSummaries" : "healthSummaries_simulated",
         `${userId}_${today}`,
       );
       const healthSummaryDoc = await getDoc(healthSummaryRef);
@@ -260,10 +338,9 @@ export class FirestoreService {
         faultyCount: data.faultyCount,
         avgVibration: data.avgVibration,
         maxVibration: data.maxVibration,
-        avgFrequency: data.avgFrequency,
         overallHealthLevel: data.overallHealthLevel,
-        createdAt: data.createdAt?.toDate(),
-        updatedAt: data.updatedAt?.toDate(),
+        createdAt: data.createdAt?.toDate?.() ?? new Date(),
+        updatedAt: data.updatedAt?.toDate?.() ?? new Date(),
       };
     } catch (error) {
       console.error("Error getting health summary: ", error);
@@ -290,15 +367,26 @@ export class FirestoreService {
       return {
         id: latestVibration.id,
         userId: data.userId,
-        timestamp: data.timestamp?.toDate(),
-        vibrationX: data.vibrationX,
-        vibrationY: data.vibrationY,
-        vibrationZ: data.vibrationZ,
+        timestamp: data.timestamp?.toDate?.() ?? new Date(),
+        vibrationX: data.vibrationX ?? null,
+        vibrationY: data.vibrationY ?? null,
+        vibrationZ: data.vibrationZ ?? null,
         magnitude: data.magnitude,
         frequency: data.frequency,
         healthStatus: data.healthStatus,
         confidenceLevel: data.confidenceLevel,
-        createdAt: data.createdAt?.toDate(),
+        generatedAt: data.generatedAt,
+        thresholdUsed: data.thresholdUsed,
+        meanFaultyProbability: data.meanFaultyProbability,
+        minFaultyProbability: data.minFaultyProbability,
+        maxFaultyProbability: data.maxFaultyProbability,
+        totalWindows: data.totalWindows,
+        predictedFaultyWindows: data.predictedFaultyWindows,
+        predictedHealthyWindows: data.predictedHealthyWindows,
+        overallVibrationMean: data.overallVibrationMean,
+        overallVibrationMin: data.overallVibrationMin,
+        overallVibrationMax: data.overallVibrationMax,
+        createdAt: data.createdAt?.toDate?.() ?? new Date(),
       };
     } catch (error) {
       console.error("Error getting latest vibration log: ", error);
@@ -325,15 +413,26 @@ export class FirestoreService {
         return {
           id: doc.id,
           userId: data.userId,
-          timestamp: data.timestamp?.toDate(),
-          vibrationX: data.vibrationX,
-          vibrationY: data.vibrationY,
-          vibrationZ: data.vibrationZ,
+          timestamp: data.timestamp?.toDate?.() ?? new Date(),
+          vibrationX: data.vibrationX ?? null,
+          vibrationY: data.vibrationY ?? null,
+          vibrationZ: data.vibrationZ ?? null,
           magnitude: data.magnitude,
           frequency: data.frequency,
           healthStatus: data.healthStatus,
           confidenceLevel: data.confidenceLevel,
-          createdAt: data.createdAt?.toDate(),
+          generatedAt: data.generatedAt,
+          thresholdUsed: data.thresholdUsed,
+          meanFaultyProbability: data.meanFaultyProbability,
+          minFaultyProbability: data.minFaultyProbability,
+          maxFaultyProbability: data.maxFaultyProbability,
+          totalWindows: data.totalWindows,
+          predictedFaultyWindows: data.predictedFaultyWindows,
+          predictedHealthyWindows: data.predictedHealthyWindows,
+          overallVibrationMean: data.overallVibrationMean,
+          overallVibrationMin: data.overallVibrationMin,
+          overallVibrationMax: data.overallVibrationMax,
+          createdAt: data.createdAt?.toDate?.() ?? new Date(),
         };
       });
 

@@ -6,7 +6,8 @@ const CollectionContext = createContext<any>(null);
 
 const CollectionProvider = ({ children }) => {
   const [useSimulated, setUseSimulated] = useState(false);
-  const collectionName = useSimulated ? "vibration_simulated" : "vibrationLogs";
+  // Real sensor -> vibration_real, Simulated -> vibration_simulate
+  const collectionName = useSimulated ? "vibration_simulate" : "vibration_real";
 
   return (
     <CollectionContext.Provider value={{ setUseSimulated, collectionName }}>

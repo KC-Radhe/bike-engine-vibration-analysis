@@ -38,7 +38,7 @@ export function VibrationChart({
   const chartInfo =
     type === "frequency"
       ? { title: "Frequency Trend", unit: "Hz" }
-      : { title: "Vibration Magnitude Trend", unit: "m/s²" };
+      : { title: "Vibration Magnitude Trend", unit: "g" };
 
   const latestValue = chartData[chartData.length - 1]?.value || 0;
 
