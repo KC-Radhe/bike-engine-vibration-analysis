@@ -29,7 +29,10 @@ export class SensorService {
       };
 
       await deleteFromCollection("healthSummaries_simulated");
-      const deletedVibrations = await deleteFromCollection("vibration_simulated");
+      await deleteFromCollection("alerts_simulated");
+      const deletedVibrations = await deleteFromCollection(
+        "vibration_simulated",
+      );
       return { success: true, deleted: deletedVibrations };
     } catch (e: any) {
       return { success: false, deleted: 0, error: e.message };

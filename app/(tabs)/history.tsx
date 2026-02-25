@@ -1,12 +1,25 @@
 import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
-import { AlertTriangle, CheckCircle2, Filter, RefreshCw } from "lucide-react-native";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Filter,
+  RefreshCw,
+} from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../contexts/AuthContext";
 import { db } from "../../lib/firebase";
 import { VibrationLog } from "../../types/database";
-
+import { useCollection } from "./_layout";
 
 export default function HistoryScreen() {
   const { user } = useAuth();
@@ -14,20 +27,21 @@ export default function HistoryScreen() {
   const [filteredLogs, setFilteredLogs] = useState<VibrationLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [filter, setFilter] = useState<string | 'all'>('all');
+  const [filter, setFilter] = useState<string | "all">("all");
+  const { collectionName } = useCollection();
 
   const loadLogs = async () => {
     if (!user) return;
 
     try {
       const queryObj = query(
-        collection(db, 'vibrationLogs'),
-        where('userId', '==', user.uid),
-        orderBy('timestamp', 'desc')
+        collection(db, collectionName),
+        where("userId", "==", user.uid),
+        orderBy("timestamp", "desc"),
       );
 
       const querySnapshot = await getDocs(queryObj);
-      const logsData: VibrationLog[] = querySnapshot.docs.map( doc => {
+      const logsData: VibrationLog[] = querySnapshot.docs.map((doc) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -54,21 +68,21 @@ export default function HistoryScreen() {
     }
   };
 
-  const applyFilter = (logsData: VibrationLog[], filter: string | 'all') => {
-    if (filter === 'all') {
+  const applyFilter = (logsData: VibrationLog[], filter: string | "all") => {
+    if (filter === "all") {
       setFilteredLogs(logsData);
     } else {
-      setFilteredLogs(logsData.filter( log => log.healthStatus === filter));
+      setFilteredLogs(logsData.filter((log) => log.healthStatus === filter));
     }
   };
 
-  useEffect( () => {
+  useEffect(() => {
     loadLogs();
-  }, [user]);
+  }, [user, collectionName, loadLogs]);
 
-  useEffect( () => {
+  useEffect(() => {
     applyFilter(logs, filter);
-  }, [filter]);
+  }, [logs, filter]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -77,34 +91,34 @@ export default function HistoryScreen() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'healthy': 
-          return { bg: '#dcfce7', text: '#16a34a' };
-      case 'warning':
-          return { bg: '#fef3c7', text: '#d97706' };
-      case 'faulty': 
-          return { bg: '#fee2e2', text: '#dc2626' };
-      default: 
-          return { bg: '#e2e8f0', text: '#64748b' };
+      case "healthy":
+        return { bg: "#dcfce7", text: "#16a34a" };
+      case "warning":
+        return { bg: "#fef3c7", text: "#d97706" };
+      case "faulty":
+        return { bg: "#fee2e2", text: "#dc2626" };
+      default:
+        return { bg: "#e2e8f0", text: "#64748b" };
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'healthy':
-          return <CheckCircle2 size={24} color='#16a34a' strokeWidth={2} />;
-      case 'warning':
-          return <AlertTriangle size={24} color='#d97706' strokeWidth={2} />;
-      case 'faulty':
-          return <AlertTriangle size={24} color='#dc2626' strokeWidth={2} />;
+      case "healthy":
+        return <CheckCircle2 size={24} color="#16a34a" strokeWidth={2} />;
+      case "warning":
+        return <AlertTriangle size={24} color="#d97706" strokeWidth={2} />;
+      case "faulty":
+        return <AlertTriangle size={24} color="#dc2626" strokeWidth={2} />;
       default:
-          return <RefreshCw size={24} color='#64748b' strokeWidth={2} />;
+        return <RefreshCw size={24} color="#64748b" strokeWidth={2} />;
     }
   };
 
   const groupLogsByDate = (logs: VibrationLog[]) => {
-    const grouped: {[key: string]: VibrationLog[]} = {};
+    const grouped: { [key: string]: VibrationLog[] } = {};
 
-    logs.forEach(log => {
+    logs.forEach((log) => {
       const date = new Date(log.timestamp).toLocaleDateString();
       if (!grouped[date]) {
         grouped[date] = [];
@@ -121,7 +135,7 @@ export default function HistoryScreen() {
           <Text style={styles.headerTitle}>History</Text>
         </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size='large' color='#2563eb' />
+          <ActivityIndicator size="large" color="#2563eb" />
         </View>
       </SafeAreaView>
     );
@@ -132,118 +146,132 @@ export default function HistoryScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-          <Text style={styles.headerTitle}>History</Text>
+        <Text style={styles.headerTitle}>History</Text>
       </View>
       <View style={styles.filterContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} >
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <TouchableOpacity
             style={[
-              styles.filterButton, 
-              filter === 'all' && styles.filterButtonActive,
+              styles.filterButton,
+              filter === "all" && styles.filterButtonActive,
             ]}
-            onPress={() => setFilter('all')}
-           >
-            <Text style={[
-              styles.filterButtonText, 
-              filter === 'all' && styles.filterButtonTextActive
-            ]}>
+            onPress={() => setFilter("all")}
+          >
+            <Text
+              style={[
+                styles.filterButtonText,
+                filter === "all" && styles.filterButtonTextActive,
+              ]}
+            >
               All ({logs.length})
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
-              styles.filterButton, 
-              filter === 'healthy' && styles.filterButtonActive,
+              styles.filterButton,
+              filter === "healthy" && styles.filterButtonActive,
             ]}
-            onPress={() => setFilter('healthy')}
-           >
-            <Text style={[
-              styles.filterButtonText, 
-              filter === 'healthy' && styles.filterButtonTextActive
-              ]}>
-              Healthy ({logs.filter(log => log.healthStatus === 'healthy').length})
+            onPress={() => setFilter("healthy")}
+          >
+            <Text
+              style={[
+                styles.filterButtonText,
+                filter === "healthy" && styles.filterButtonTextActive,
+              ]}
+            >
+              Healthy (
+              {logs.filter((log) => log.healthStatus === "healthy").length})
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
-              styles.filterButton, 
-              filter === 'warning' && styles.filterButtonActive,
+              styles.filterButton,
+              filter === "warning" && styles.filterButtonActive,
             ]}
-            onPress={() => setFilter('warning')}
-           >
-            <Text style={[
-              styles.filterButtonText, 
-              filter === 'warning' && styles.filterButtonTextActive
-              ]}>
-              Warning ({logs.filter(log => log.healthStatus === 'warning').length})
+            onPress={() => setFilter("warning")}
+          >
+            <Text
+              style={[
+                styles.filterButtonText,
+                filter === "warning" && styles.filterButtonTextActive,
+              ]}
+            >
+              Warning (
+              {logs.filter((log) => log.healthStatus === "warning").length})
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
-              styles.filterButton, 
-              filter === 'faulty' && styles.filterButtonActive,
+              styles.filterButton,
+              filter === "faulty" && styles.filterButtonActive,
             ]}
-            onPress={() => setFilter('faulty')}
-           >
-            <Text style={[
-              styles.filterButtonText, 
-              filter === 'faulty' && styles.filterButtonTextActive
-              ]}>
-              Faulty ({logs.filter(log => log.healthStatus === 'faulty').length})
+            onPress={() => setFilter("faulty")}
+          >
+            <Text
+              style={[
+                styles.filterButtonText,
+                filter === "faulty" && styles.filterButtonTextActive,
+              ]}
+            >
+              Faulty (
+              {logs.filter((log) => log.healthStatus === "faulty").length})
             </Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
 
-      {filteredLogs.length === 0? (
+      {filteredLogs.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Filter size={64} color='#cbd5e1' strokeWidth={1.5} />
+          <Filter size={64} color="#cbd5e1" strokeWidth={1.5} />
           <Text style={styles.emptyText}>No Logs Found</Text>
           <Text style={styles.emptySubtext}>
-            {
-              filter === 'all'
-              ? 'Start monitoring to see history'
-              : `No ${filter} readings yet`
-            }
+            {filter === "all"
+              ? "Start monitoring to see history"
+              : `No ${filter} readings yet`}
           </Text>
         </View>
       ) : (
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.content}
-          refreshControl={ 
+          refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-         >
+        >
           {Object.entries(groupedLogs).map(([date, dateLogs]) => (
             <View key={date} style={styles.dateGroup}>
               <Text style={styles.dateHeader}>{date}</Text>
-              {dateLogs.map( log => {
+              {dateLogs.map((log) => {
                 const statusColors = getStatusColor(log.healthStatus);
                 return (
-                  <View 
+                  <View
                     key={log.id}
                     style={[
                       styles.logCard,
-                      { borderLeftColor: statusColors.bg, borderLeftWidth: 6, }
+                      { borderLeftColor: statusColors.bg, borderLeftWidth: 6 },
                     ]}
-                  > 
+                  >
                     <View style={styles.logHeader}>
                       <View style={styles.logTime}>
                         <Text style={styles.timeText}>
                           {new Date(log.timestamp).toLocaleDateString()}
                         </Text>
                       </View>
-                      <View style={[
-                        styles.statusBadge,
-                        { backgroundColor: statusColors.bg}
-                      ]}>
+                      <View
+                        style={[
+                          styles.statusBadge,
+                          { backgroundColor: statusColors.bg },
+                        ]}
+                      >
                         {getStatusIcon(log.healthStatus)}
-                        <Text style={[
-                          styles.statusText, 
-                          {color: statusColors.text}
-                        ]}>
-                          {log.healthStatus.charAt(0).toUpperCase() + log.healthStatus.slice(1)}
+                        <Text
+                          style={[
+                            styles.statusText,
+                            { color: statusColors.text },
+                          ]}
+                        >
+                          {log.healthStatus.charAt(0).toUpperCase() +
+                            log.healthStatus.slice(1)}
                         </Text>
                       </View>
                     </View>
@@ -271,7 +299,7 @@ export default function HistoryScreen() {
                       </View>
                     </View>
                   </View>
-                )
+                );
               })}
             </View>
           ))}
@@ -284,73 +312,73 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: "#f8fafc",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 15,
     paddingVertical: 15,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f1f1',
+    borderBottomColor: "#f1f1f1",
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: '700',
-    color: '#2563eb',
+    fontWeight: "700",
+    color: "#2563eb",
   },
   filterContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: "#e2e8f0",
   },
   filterButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#fff',
+    borderColor: "#e2e8f0",
+    backgroundColor: "#fff",
     marginRight: 8,
   },
   filterButtonActive: {
-    borderColor: '#2563eb',
-    backgroundColor: '#eff6ff',
+    borderColor: "#2563eb",
+    backgroundColor: "#eff6ff",
   },
   filterButtonText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#64748b',
+    fontWeight: "500",
+    color: "#64748b",
   },
   filterButtonTextActive: {
-    color: '#2563eb',
+    color: "#2563eb",
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#64748b',
+    fontWeight: "600",
+    color: "#64748b",
     marginTop: 16,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#94a3b8',
+    color: "#94a3b8",
     marginTop: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   scrollView: {
     flex: 1,
@@ -364,38 +392,38 @@ const styles = StyleSheet.create({
   },
   dateHeader: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#64748b',
+    fontWeight: "600",
+    color: "#64748b",
     marginBottom: 12,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   logCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: "#e2e8f0",
   },
   logHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 12,
   },
   logTime: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   timeText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#1e293b',
+    fontWeight: "500",
+    color: "#1e293b",
   },
   statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -403,47 +431,47 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   logMetrics: {
     gap: 12,
   },
   metricRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
   },
   metric: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: "#f8fafc",
     padding: 12,
     borderRadius: 8,
   },
   metricLabel: {
     fontSize: 11,
-    fontWeight: '500',
-    color: '#64748b',
+    fontWeight: "500",
+    color: "#64748b",
     marginBottom: 4,
   },
   metricValue: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#1e293b',
+    fontWeight: "600",
+    color: "#1e293b",
   },
   confidenceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
+    borderTopColor: "#f1f5f9",
   },
   confidenceLabel: {
     fontSize: 12,
-    color: '#64748b',
+    color: "#64748b",
   },
   confidenceValue: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#1e293b',
+    fontWeight: "600",
+    color: "#1e293b",
   },
 });

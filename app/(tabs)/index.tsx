@@ -1,18 +1,18 @@
 import {
-    AlertTriangle,
-    CheckCircle2,
-    LogOut,
-    RefreshCw,
+  AlertTriangle,
+  CheckCircle2,
+  LogOut,
+  RefreshCw,
 } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SimulatorButton } from "../../components/SimulatorButton";
@@ -20,10 +20,12 @@ import { useAuth } from "../../contexts/AuthContext";
 import { FirestoreService } from "../../services/firestoreService";
 import { HealthSummary, VibrationLog } from "../../types/database";
 import {
-    registerForPushNotificationsAsync,
-    sendLocalNotification,
+  registerForPushNotificationsAsync,
+  sendLocalNotification,
 } from "../../utils/registerForPushNotifications";
 import { VibrationChart } from "./../../components/VibrationsChart";
+
+import { useCollection } from "./_layout";
 
 export default function DashboardScreen() {
   const { signOut, user } = useAuth();
@@ -34,7 +36,7 @@ export default function DashboardScreen() {
   );
   const [latestLog, setLatestLog] = useState<VibrationLog | null>(null);
   const [recentLogs, setRecentLogs] = useState<VibrationLog[]>([]);
-  const [useSimulated, setUseSimulated] = useState(false);
+  const { setUseSimulated, collectionName } = useCollection();
 
   // console.log("real vibration data: ", realVibrationData.overall);
 
@@ -44,9 +46,7 @@ export default function DashboardScreen() {
     if (!user) return;
 
     try {
-      const collectionName = useSimulated
-        ? "vibration_simulated"
-        : "vibrationLogs"; //TODO: should change to vibration_real
+      //TODO: should change to vibration_real
       const [summary, log, recentLogs] = await Promise.all([
         FirestoreService.getTodayHealthSummary(user.uid, collectionName),
         FirestoreService.getLatestVibrationLog(user.uid, collectionName),
@@ -61,7 +61,7 @@ export default function DashboardScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [user, useSimulated]);
+  }, [user, collectionName]);
 
   useEffect(() => {
     registerForPushNotificationsAsync();
@@ -69,7 +69,7 @@ export default function DashboardScreen() {
 
   useEffect(() => {
     loadData();
-  }, [loadData, useSimulated]);
+  }, [loadData, collectionName]);
 
   // TODO: NOTIFICATION SENT ON FIRST RENDER, NEED TO SKIP FIRST RENDER
   const prevStatusRef = useRef<string | null>(null);

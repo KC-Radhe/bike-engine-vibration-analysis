@@ -78,11 +78,15 @@ export class FirestoreService {
         healthStatus === "faulty" ||
         (healthStatus === "warning" && magnitude > 3.5)
       ) {
-        await this.createAlert(userId, {
-          magnitude,
-          healthStatus,
-          vibrationLogId: vibrationLogRef.id,
-        });
+        await this.createAlert(
+          userId,
+          {
+            magnitude,
+            healthStatus,
+            vibrationLogId: vibrationLogRef.id,
+          },
+          colName,
+        );
       }
 
       return { success: true, logId: vibrationLogRef.id };
@@ -99,11 +103,15 @@ export class FirestoreService {
       healthStatus: string;
       vibrationLogId: string;
     },
+    colName: string,
   ): Promise<void> {
     let alertType: Alert["alertType"];
     let severity: Alert["severity"];
     let title: string;
     let message: string;
+
+    const alertCol =
+      colName === "vibrationLogs" ? "alerts" : "alerts_simulated";
 
     if (data.healthStatus === "faulty") {
       alertType = "fault_detected";
@@ -122,7 +130,7 @@ export class FirestoreService {
       message = `Engine may fault warning with ${data.magnitude.toFixed(2)}m/s² vibration.\nMONITOR CLOSELY`;
     }
 
-    await addDoc(collection(db, "alerts"), {
+    await addDoc(collection(db, alertCol), {
       userId,
       alertType,
       severity,
