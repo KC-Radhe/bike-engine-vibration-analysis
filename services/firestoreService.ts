@@ -90,7 +90,15 @@ export class FirestoreService {
         // Save window timeline as subcollection: {colName}/{logId}/windows
         const batch = writeBatch(db);
         const windowsCol = collection(vibrationLogRef, "windows");
-        for (const w of payload.windows) {
+
+        // For simulation runs we only persist a small, fixed window set
+        // to keep Firestore usage predictable (requested: max 21 docs).
+        const windowsToSave =
+          colName === "vibration_simulate"
+            ? payload.windows.slice(0, 21)
+            : payload.windows;
+
+        for (const w of windowsToSave) {
           const wRef = doc(windowsCol);
           batch.set(wRef, {
             startIdx: w.start_idx,
