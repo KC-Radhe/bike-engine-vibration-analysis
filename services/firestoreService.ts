@@ -200,7 +200,8 @@ export class FirestoreService {
     let title: string;
     let message: string;
 
-    const alertCol = colName === "vibration_real" ? "alerts" : "alerts_simulated";
+    // Alerts collections (requested)
+    const alertCol = colName === "vibration_real" ? "alert_real" : "alert_simulated";
 
     if (data.healthStatus === "faulty") {
       alertType = "fault_detected";
@@ -230,6 +231,50 @@ export class FirestoreService {
       isDismissed: false,
       createdAt: serverTimestamp(),
     });
+  }
+
+  /**
+   * Reads the latest vibration log for the user (from colName), then returns
+   * random window-series values from its `windows` subcollection.
+   *
+   * Used for dashboard trend charts.
+   */
+  static async getRandomWindowSeriesForLatestLog(
+    userId: string,
+    colName: string,
+    field: "faultyProbability" | "vibrationMean",
+    take: number = 20,
+  ): Promise<number[]> {
+    try {
+      const latest = await this.getLatestVibrationLog(userId, colName);
+      if (!latest) return [];
+
+      // Only inference JSON logs have windows subcollection
+      if (latest.meanFaultyProbability === undefined) return [];
+
+      const windowsRef = collection(db, colName, latest.id, "windows");
+      const snap = await getDocs(windowsRef);
+      if (snap.empty) return [];
+
+      const all: number[] = [];
+      snap.forEach((d) => {
+        const v = d.data()?.[field];
+        if (typeof v === "number" && Number.isFinite(v)) all.push(v);
+      });
+
+      if (all.length === 0) return [];
+
+      // random sample `take`
+      const shuffled = all
+        .map((v) => ({ v, r: Math.random() }))
+        .sort((a, b) => a.r - b.r)
+        .map((x) => x.v);
+
+      return shuffled.slice(0, Math.min(take, shuffled.length));
+    } catch (e) {
+      console.error("Error fetching window series:", e);
+      return [];
+    }
   }
 
   private static async updateHealthSummary(

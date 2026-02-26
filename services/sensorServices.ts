@@ -29,7 +29,8 @@ export class SensorService {
       };
 
       await deleteFromCollection("healthSummaries_simulated");
-      await deleteFromCollection("alerts_simulated");
+      // requested: delete alert_simulated when switching back to real
+      await deleteFromCollection("alert_simulated");
       const deletedVibrations = await deleteFromCollection("vibration_simulate");
       return { success: true, deleted: deletedVibrations };
     } catch (e: any) {

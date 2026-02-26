@@ -23,7 +23,7 @@ import {
   registerForPushNotificationsAsync,
   sendLocalNotification,
 } from "../../utils/registerForPushNotifications";
-import { VibrationChart } from "./../../components/VibrationsChart";
+import { TrendChart } from "./../../components/VibrationsChart";
 import { useCollection } from "./_layout";
 
 export default function DashboardScreen() {
@@ -35,6 +35,8 @@ export default function DashboardScreen() {
   );
   const [latestLog, setLatestLog] = useState<VibrationLog | null>(null);
   const [recentLogs, setRecentLogs] = useState<VibrationLog[]>([]);
+  const [faultProbSeries, setFaultProbSeries] = useState<number[]>([]);
+  const [vibrationMeanSeries, setVibrationMeanSeries] = useState<number[]>([]);
   const { setUseSimulated, collectionName } = useCollection();
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -55,6 +57,29 @@ export default function DashboardScreen() {
       setHealthSummary(summary);
       setLatestLog(log);
       setRecentLogs(recentLogs);
+
+      // Trend series from windows subcollection (only for inference JSON logs)
+      if (log && log.meanFaultyProbability !== undefined) {
+        const [fp, vm] = await Promise.all([
+          FirestoreService.getRandomWindowSeriesForLatestLog(
+            user.uid,
+            collectionName,
+            "faultyProbability",
+            20,
+          ),
+          FirestoreService.getRandomWindowSeriesForLatestLog(
+            user.uid,
+            collectionName,
+            "vibrationMean",
+            20,
+          ),
+        ]);
+        setFaultProbSeries(fp);
+        setVibrationMeanSeries(vm);
+      } else {
+        setFaultProbSeries([]);
+        setVibrationMeanSeries([]);
+      }
     } catch (error) {
       console.error("Error loading dashboad data: ", error);
     } finally {
@@ -392,9 +417,31 @@ export default function DashboardScreen() {
             </View>
           </View>
         </View>
-        {recentLogs.length > 0 && (
-          <VibrationChart logs={recentLogs} type="magnitude" />
-        )}
+        {latestLog?.meanFaultyProbability !== undefined &&
+          faultProbSeries.length > 0 && (
+            <TrendChart
+              title="Fault Probability Trend"
+              unit=""
+              color="#8b5cf6"
+              values={faultProbSeries}
+              mean={latestLog.meanFaultyProbability}
+              min={latestLog.minFaultyProbability}
+              max={latestLog.maxFaultyProbability}
+            />
+          )}
+
+        {latestLog?.meanFaultyProbability !== undefined &&
+          vibrationMeanSeries.length > 0 && (
+            <TrendChart
+              title="Vibration Magnitude Trend"
+              unit="g"
+              color="#2563eb"
+              values={vibrationMeanSeries}
+              mean={latestLog.overallVibrationMean}
+              min={latestLog.overallVibrationMin}
+              max={latestLog.overallVibrationMax}
+            />
+          )}
       </ScrollView>
       {isTransitioning && (
         <View style={styles.transitionOverlay} pointerEvents="none">
