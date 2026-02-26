@@ -25,31 +25,37 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
   const { user } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState<
+    null | "healthy" | "warning" | "faulty" | "start_monitoring"
+  >(null);
   const [message, setMessage] = useState("");
   const [useRealSensors, setUseRealSensors] = useState(true);
   const [isMonitoring, setIsMonitoring] = useState(false);
 
   const simulateData = async (condition: "healthy" | "warning" | "faulty") => {
     if (!user) return;
-    setLoading(true);
+    setActionLoading(condition);
     setMessage("");
 
-    // Generates data in the SAME shape as the inference JSON payload
-    const payload = genereateSimulatedData(condition);
+    try {
+      // Generates data in the SAME shape as the inference JSON payload
+      const payload = genereateSimulatedData(condition);
+      const colName = "vibration_simulate";
 
-    // Save only ONCE (fix: today's overview count must increment by 1)
-    const colName = "vibration_simulate";
+      const r1 = await FirestoreService.saveVibrationLog(user.uid, payload, colName);
 
-    const r1 = await FirestoreService.saveVibrationLog(user.uid, payload, colName);
-
-    if (r1.success) {
-      const c = condition.charAt(0).toUpperCase() + condition.slice(1);
-      setMessage(`${c} data sent successfully.`);
-      onDataSent?.();
-    } else {
-      setMessage(`Error: ${r1.error}`);
+      if (r1.success) {
+        const c = condition.charAt(0).toUpperCase() + condition.slice(1);
+        setMessage(`${c} data sent successfully.`);
+        onDataSent?.();
+      } else {
+        setMessage(`Error: ${r1.error}`);
+      }
+    } catch (e: any) {
+      setMessage(`Error: ${e?.message ?? String(e)}`);
+    } finally {
+      setActionLoading(null);
     }
-    setLoading(false);
   };
 
   const handleToggle = async (toReal: boolean) => {
@@ -76,7 +82,7 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
   const startRealSensorMonitoring = async () => {
     if (!user) return;
 
-    setLoading(true);
+    setActionLoading("start_monitoring");
     setMessage("");
     setIsMonitoring(true);
 
@@ -99,7 +105,7 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
     } catch (e: any) {
       setMessage(`Error: ${e?.message ?? String(e)}`);
     } finally {
-      setLoading(false);
+      setActionLoading(null);
       setIsMonitoring(false);
     }
   };
@@ -148,7 +154,7 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
                 onValueChange={handleToggle}
                 trackColor={{ false: "#cbd5e1", true: "#2563eb" }}
                 thumbColor={useRealSensors ? "#fff" : "#f1f5f9"}
-                disabled={loading}
+                disabled={loading || actionLoading !== null}
               />
             </View>
 
@@ -183,14 +189,21 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
                   <TouchableOpacity
                     style={[styles.simButton, styles.startButton]}
                     onPress={startRealSensorMonitoring}
-                    disabled={loading}
+                    disabled={loading || actionLoading !== null}
                   >
-                    <>
-                      <Text style={styles.simButtonText}>Start Monitoring</Text>
-                      <Text style={styles.simButtonSubtext}>
-                        Save inference JSON to vibration_real
-                      </Text>
-                    </>
+                    {actionLoading === "start_monitoring" ? (
+                      <View style={styles.inlineLoadingRow}>
+                        <ActivityIndicator color="#fff" />
+                        <Text style={styles.simButtonText}>Starting…</Text>
+                      </View>
+                    ) : (
+                      <>
+                        <Text style={styles.simButtonText}>Start Monitoring</Text>
+                        <Text style={styles.simButtonSubtext}>
+                          Save inference JSON to vibration_real
+                        </Text>
+                      </>
+                    )}
                   </TouchableOpacity>
                 ) : (
                   <TouchableOpacity
@@ -210,32 +223,53 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
                   <TouchableOpacity
                     style={[styles.simButton, styles.healthyButton]}
                     onPress={() => simulateData("healthy")}
-                    disabled={loading}
+                    disabled={loading || actionLoading !== null}
                   >
-                    <>
-                      <Text style={styles.simButtonText}>Healthy Data</Text>
-                      <Text style={styles.simButtonSubtext}>Low Fault Risk</Text>
-                    </>
+                    {actionLoading === "healthy" ? (
+                      <View style={styles.inlineLoadingRow}>
+                        <ActivityIndicator color="#fff" />
+                        <Text style={styles.simButtonText}>Sending…</Text>
+                      </View>
+                    ) : (
+                      <>
+                        <Text style={styles.simButtonText}>Healthy Data</Text>
+                        <Text style={styles.simButtonSubtext}>Low Fault Risk</Text>
+                      </>
+                    )}
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.simButton, styles.warningButton]}
                     onPress={() => simulateData("warning")}
-                    disabled={loading}
+                    disabled={loading || actionLoading !== null}
                   >
-                    <>
-                      <Text style={styles.simButtonText}>Warning Data</Text>
-                      <Text style={styles.simButtonSubtext}>Around Threshold</Text>
-                    </>
+                    {actionLoading === "warning" ? (
+                      <View style={styles.inlineLoadingRow}>
+                        <ActivityIndicator color="#fff" />
+                        <Text style={styles.simButtonText}>Sending…</Text>
+                      </View>
+                    ) : (
+                      <>
+                        <Text style={styles.simButtonText}>Warning Data</Text>
+                        <Text style={styles.simButtonSubtext}>Around Threshold</Text>
+                      </>
+                    )}
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.simButton, styles.faultyButon]}
                     onPress={() => simulateData("faulty")}
-                    disabled={loading}
+                    disabled={loading || actionLoading !== null}
                   >
-                    <>
-                      <Text style={styles.simButtonText}>Faulty Data</Text>
-                      <Text style={styles.simButtonSubtext}>High Fault Risk</Text>
-                    </>
+                    {actionLoading === "faulty" ? (
+                      <View style={styles.inlineLoadingRow}>
+                        <ActivityIndicator color="#fff" />
+                        <Text style={styles.simButtonText}>Sending…</Text>
+                      </View>
+                    ) : (
+                      <>
+                        <Text style={styles.simButtonText}>Faulty Data</Text>
+                        <Text style={styles.simButtonSubtext}>High Fault Risk</Text>
+                      </>
+                    )}
                   </TouchableOpacity>
                 </>
               </View>
@@ -356,6 +390,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 4,
     opacity: 0.9,
+  },
+  inlineLoadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
   },
   startButton: {
     backgroundColor: "#2563eb",

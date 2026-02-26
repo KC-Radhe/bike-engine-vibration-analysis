@@ -39,6 +39,9 @@ export default function DashboardScreen() {
   const { setUseSimulated, collectionName } = useCollection();
   const [isTransitioning, setIsTransitioning] = useState(false);
 
+  // Fault Probability Trend (and its underlying Firestore reads) must be disabled in simulation mode.
+  const isSimulated = collectionName === "vibration_simulate";
+
   // console.log("real vibration data: ", realVibrationData.overall);
 
   const currentStatus = latestLog?.healthStatus || null;
@@ -58,7 +61,8 @@ export default function DashboardScreen() {
       setRecentLogs(recentLogs);
 
       // Trend series from windows subcollection (only for inference JSON logs)
-      if (log && log.meanFaultyProbability !== undefined) {
+      // IMPORTANT: disable this in simulation mode to avoid extra reads/polling and to hide the UI.
+      if (!isSimulated && log && log.meanFaultyProbability !== undefined) {
         const fp = await FirestoreService.getRandomWindowSeriesForLatestLog(
           user.uid,
           collectionName,
@@ -75,7 +79,7 @@ export default function DashboardScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [user, collectionName]);
+  }, [user, collectionName, isSimulated]);
 
   useEffect(() => {
     registerForPushNotificationsAsync();
@@ -406,7 +410,8 @@ export default function DashboardScreen() {
             </View>
           </View>
         </View>
-        {latestLog?.meanFaultyProbability !== undefined &&
+        {!isSimulated &&
+          latestLog?.meanFaultyProbability !== undefined &&
           faultProbSeries.length > 0 && (
             <TrendChart
               title="Fault Probability Trend"

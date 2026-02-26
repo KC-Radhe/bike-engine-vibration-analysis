@@ -57,7 +57,12 @@ export class FirestoreService {
           ps.mean_faulty_probability >= ps.threshold_used ? "faulty" : "healthy";
         const confidenceLevel = ps.mean_faulty_probability * 100;
 
-        const vibrationLogRef = await addDoc(collection(db, colName), {
+        // Batch-write the log + its windows (+ alert if faulty) in ONE commit.
+        // This reduces perceived UI delay on slow networks.
+        const logRef = doc(collection(db, colName));
+        const batch = writeBatch(db);
+
+        batch.set(logRef, {
           timestamp: serverTimestamp(),
           userId,
 
@@ -88,8 +93,7 @@ export class FirestoreService {
         });
 
         // Save window timeline as subcollection: {colName}/{logId}/windows
-        const batch = writeBatch(db);
-        const windowsCol = collection(vibrationLogRef, "windows");
+        const windowsCol = collection(db, colName, logRef.id, "windows");
 
         // For simulation runs we only persist a small, fixed window set
         // to keep Firestore usage predictable (requested: max 21 docs).
@@ -112,6 +116,26 @@ export class FirestoreService {
             predictedLabel: w.predicted_label,
           });
         }
+
+        // Optional alert doc in SAME batch when faulty
+        if (healthStatus === "faulty") {
+          const alertCol = colName === "vibration_real" ? "alert_real" : "alert_simulated";
+          const alertRef = doc(collection(db, alertCol));
+          batch.set(alertRef, {
+            userId,
+            alertType: "fault_detected",
+            severity: "critical",
+            title: "Critical Engine Fault Detected",
+            message: `Engine fault detected with ${magnitude.toFixed(
+              2,
+            )}g vibration.\nIMMEDIATE ATTENTION REQUIRED.`,
+            vibrationLogId: logRef.id,
+            isRead: false,
+            isDismissed: false,
+            createdAt: serverTimestamp(),
+          });
+        }
+
         await batch.commit();
 
         await this.updateHealthSummary(
@@ -120,15 +144,7 @@ export class FirestoreService {
           colName,
         );
 
-        if (healthStatus === "faulty") {
-          await this.createAlert(
-            userId,
-            { magnitude, healthStatus, vibrationLogId: vibrationLogRef.id },
-            colName,
-          );
-        }
-
-        return { success: true, logId: vibrationLogRef.id };
+        return { success: true, logId: logRef.id };
       }
 
       // ---------------- Raw sensor reading branch (existing logic) ----------------
