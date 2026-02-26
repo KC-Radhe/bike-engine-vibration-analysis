@@ -16,6 +16,34 @@ import {
 import { db } from "../lib/firebase";
 import { Alert, HealthSummary, VibrationLog, InferencePayload } from "../types/database";
 
+// Firestore does NOT allow `undefined` anywhere in the object tree.
+// This helper removes undefined keys/values recursively and normalizes NaN/Infinity.
+function sanitizeForFirestore<T>(value: T): T {
+  if (value === undefined) return undefined as any;
+  if (value === null) return value;
+
+  if (typeof value === "number") {
+    return (Number.isFinite(value) ? value : 0) as any;
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((v) => sanitizeForFirestore(v))
+      .filter((v) => v !== undefined) as any;
+  }
+
+  if (typeof value === "object") {
+    const out: any = {};
+    for (const [k, v] of Object.entries(value as any)) {
+      const sv = sanitizeForFirestore(v);
+      if (sv !== undefined) out[k] = sv;
+    }
+    return out;
+  }
+
+  return value;
+}
+
 export class FirestoreService {
   static async saveVibrationLog(
     userId: string,
@@ -51,6 +79,9 @@ export class FirestoreService {
         const ps = payload.overall.probability_stats;
         const vs = payload.overall.vibration_stats;
 
+        const safeWindows = Array.isArray(payload.windows) ? payload.windows : [];
+        const totalWindows = safeWindows.length; // NEVER undefined
+
         const magnitude = vs.mean; // representative vibration level
         const frequency = 0; // frequency not present in inference JSON
         const healthStatus =
@@ -62,7 +93,7 @@ export class FirestoreService {
         const logRef = doc(collection(db, colName));
         const batch = writeBatch(db);
 
-        batch.set(logRef, {
+        const vibrationLogDoc = sanitizeForFirestore({
           timestamp: serverTimestamp(),
           userId,
 
@@ -82,15 +113,18 @@ export class FirestoreService {
           meanFaultyProbability: ps.mean_faulty_probability,
           minFaultyProbability: ps.min_faulty_probability,
           maxFaultyProbability: ps.max_faulty_probability,
-          totalWindows: ps.total_windows,
-          predictedFaultyWindows: ps.predicted_faulty_windows,
-          predictedHealthyWindows: ps.predicted_healthy_windows,
+          // Some device payloads don't include ps.total_windows; derive safely.
+          totalWindows,
+          predictedFaultyWindows: ps.predicted_faulty_windows ?? 0,
+          predictedHealthyWindows: ps.predicted_healthy_windows ?? 0,
           overallVibrationMean: vs.mean,
           overallVibrationMin: vs.min,
           overallVibrationMax: vs.max,
 
           createdAt: serverTimestamp(),
         });
+
+        batch.set(logRef, vibrationLogDoc);
 
         // Save window timeline as subcollection: {colName}/{logId}/windows
         const windowsCol = collection(db, colName, logRef.id, "windows");
@@ -99,22 +133,23 @@ export class FirestoreService {
         // to keep Firestore usage predictable (requested: max 21 docs).
         const windowsToSave =
           colName === "vibration_simulate"
-            ? payload.windows.slice(0, 21)
-            : payload.windows;
+            ? safeWindows.slice(0, 21)
+            : safeWindows;
 
         for (const w of windowsToSave) {
           const wRef = doc(windowsCol);
-          batch.set(wRef, {
+          const windowDoc = sanitizeForFirestore({
             startIdx: w.start_idx,
             endIdx: w.end_idx,
             startTimeMs: w.start_time_ms,
             endTimeMs: w.end_time_ms,
-            vibrationMean: w.vibration_stats.mean,
-            vibrationMin: w.vibration_stats.min,
-            vibrationMax: w.vibration_stats.max,
-            faultyProbability: w.faulty_probability,
+            vibrationMean: w.vibration_stats?.mean ?? 0,
+            vibrationMin: w.vibration_stats?.min ?? 0,
+            vibrationMax: w.vibration_stats?.max ?? 0,
+            faultyProbability: w.faulty_probability ?? 0,
             predictedLabel: w.predicted_label,
           });
+          batch.set(wRef, windowDoc);
         }
 
         // Optional alert doc in SAME batch when faulty
@@ -513,18 +548,14 @@ export class FirestoreService {
   }
 
   /**
-   * Optional: fetch a "live" real-inference payload from Firestore.
+   * Fetch the latest inference payload written by a physical device.
    *
-   * Why:
-   * - Bundled JSON (unseen_inference_output.json) does NOT change at runtime.
-   * - If you want the monitoring loop to pick up changes without stopping/starting,
-   *   write the latest payload into this Firestore doc.
-   *
-   * Path: users/{userId}/real_inference/latest
+   * Expected path: devices/{deviceId}
+   * The document should contain the inference payload fields, including `generated_at`.
    */
-  static async getRealInferenceSource(userId: string): Promise<InferencePayload | null> {
+  static async getDeviceInferenceSource(deviceId: string): Promise<InferencePayload | null> {
     try {
-      const ref = doc(db, "users", userId, "real_inference", "latest");
+      const ref = doc(db, "devices", deviceId);
       const snap = await getDoc(ref);
       if (!snap.exists()) return null;
       return snap.data() as unknown as InferencePayload;

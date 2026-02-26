@@ -21,6 +21,12 @@ interface SimulatorButtonProps {
   onToggleChange?: (toReal: boolean, onDone: () => void) => void;
 }
 
+// Device doc that continuously rewrites the latest inference payload.
+const DEVICE_ID = "device_01";
+
+// Polling interval for reading the device document (30 seconds).
+const DEVICE_POLL_MS = 30_000;
+
 export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonProps) {
   const { user } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
@@ -36,8 +42,8 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Always compare against the latest saved value (avoid stale state in setInterval)
-  const lastSavedGeneratedAtRef = useRef<number>(0);
+  // Compare against latest saved value (avoid stale state in setInterval)
+  const lastSavedGeneratedAtRef = useRef<string>("");
 
   const showToast = (text: string) => {
     setTickToast(text);
@@ -45,47 +51,19 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
     toastTimeoutRef.current = setTimeout(() => setTickToast(""), 3500);
   };
 
-  const parseGeneratedAtMs = (generatedAt: string | undefined | null): number => {
-    if (!generatedAt) return 0;
-
-    // Normalize formats so Hermes/Android parses consistently.
+  const normalizeGeneratedAt = (generatedAt: string | undefined | null): string => {
+    if (!generatedAt) return "";
     let s = String(generatedAt).trim();
-
-    // Support "YYYY-MM-DD HH:mm:ss" -> "YYYY-MM-DDTHH:mm:ss"
-    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(s)) {
-      s = s.replace(" ", "T");
-    }
-
-    // If timezone missing, assume UTC.
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(s)) {
-      s = `${s}Z`;
-    }
-
-    const ms = new Date(s).getTime();
-    return Number.isFinite(ms) ? ms : 0;
+    // "YYYY-MM-DD HH:mm:ss" -> "YYYY-MM-DDTHH:mm:ss"
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(s)) s = s.replace(" ", "T");
+    // Keep as "YYYY-MM-DDTHH:mm:ss" (no timezone) because lexical ordering works for this format.
+    return s;
   };
 
-  /**
-   * IMPORTANT LIMITATION (and the reason your override didn't work while monitoring):
-   * - A bundled JSON file (like unseen_inference_output.json) DOES NOT change at runtime.
-   * - Editing the file on your computer will not update an already-running app instance
-   *   unless the JS bundle is reloaded (Fast Refresh / Reload).
-   *
-   * Fix implemented here:
-   * - If you create/update this Firestore doc, monitoring will pick it up every minute:
-   *     users/{uid}/real_inference/latest
-   *   (Put the whole payload there, including generated_at)
-   * - If that doc doesn't exist, it falls back to the bundled JSON.
-   */
-  const readRealInferencePayload = async (): Promise<{ payload: InferencePayload; source: "firestore" | "bundle" }> => {
-    if (user) {
-      const live = await FirestoreService.getRealInferenceSource(user.uid);
-      if (live && live.generated_at) {
-        return { payload: live, source: "firestore" };
-      }
-    }
-
-    return { payload: (bundledRealInference as unknown as InferencePayload), source: "bundle" };
+  const readDeviceInferencePayload = async (): Promise<{ payload: InferencePayload; source: "device" | "bundle" }> => {
+    const live = await FirestoreService.getDeviceInferenceSource(DEVICE_ID);
+    if (live && live.generated_at) return { payload: live, source: "device" };
+    return { payload: bundledRealInference as unknown as InferencePayload, source: "bundle" };
   };
 
   const simulateData = async (condition: "healthy" | "warning" | "faulty") => {
@@ -98,7 +76,6 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
       const colName = "vibration_simulate";
 
       const r1 = await FirestoreService.saveVibrationLog(user.uid, payload, colName);
-
       if (r1.success) {
         const c = condition.charAt(0).toUpperCase() + condition.slice(1);
         setMessage(`${c} data sent successfully.`);
@@ -117,7 +94,6 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
     setMessage("");
     setLoading(true);
 
-    // Prevent switching sources while monitoring.
     if (isMonitoring) {
       setMessage("Stop monitoring before switching data source.");
       setLoading(false);
@@ -128,16 +104,25 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
     if (toReal && user) {
       setMessage("Cleaning up Simulated data...");
       const result = await SensorService.deleteSimulatedData(user.uid);
-      if (result.success) {
-        setMessage(`Deleted ${result.deleted} simulated records.`);
-      } else {
-        setMessage(`Cleanup warning: ${result.error}`);
-      }
+      if (result.success) setMessage(`Deleted ${result.deleted} simulated records.`);
+      else setMessage(`Cleanup warning: ${result.error}`);
     }
 
     setUseRealSensors(toReal);
-    onToggleChange?.(toReal, () => {
-      setLoading(false);
+    onToggleChange?.(toReal, () => setLoading(false));
+  };
+
+  // 🔥 Key fix: ensure dashboard context switches to vibration_real when monitoring starts.
+  const ensureParentIsRealMode = async () => {
+    if (!onToggleChange) return;
+
+    // Trigger parent context update (collectionName -> vibration_real)
+    await new Promise<void>((resolve) => {
+      setLoading(true);
+      onToggleChange(true, () => {
+        setLoading(false);
+        resolve();
+      });
     });
   };
 
@@ -145,50 +130,43 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
     if (!user) return;
     if (intervalRef.current) return;
 
+    // Force parent/dashboard to real mode so it reads vibration_real.
+    await ensureParentIsRealMode();
+    setUseRealSensors(true);
+
     setActionLoading("start_monitoring");
     setMessage("");
     setIsMonitoring(true);
 
     try {
-      // Prime last-saved generatedAt from Firestore logs.
       const latest = await FirestoreService.getLatestVibrationLog(user.uid, "vibration_real");
-      lastSavedGeneratedAtRef.current = parseGeneratedAtMs(latest?.generatedAt ?? null);
+      lastSavedGeneratedAtRef.current = normalizeGeneratedAt(latest?.generatedAt ?? null);
 
       const tick = async (isFirst = false) => {
-        if (!user) return;
-
         showToast("Read a Vibration Log");
 
         try {
-          const { payload, source } = await readRealInferencePayload();
-          const currentMs = parseGeneratedAtMs(payload.generated_at);
-          const lastMs = lastSavedGeneratedAtRef.current;
+          const { payload, source } = await readDeviceInferencePayload();
+          const current = normalizeGeneratedAt(payload.generated_at);
+          const last = lastSavedGeneratedAtRef.current;
 
-          if (!currentMs) {
-            setMessage(
-              `Read ${source} JSON but generated_at is invalid: ${String(payload.generated_at)}`,
-            );
+          if (!current) {
+            setMessage(`Read ${source} payload but generated_at is invalid: ${String(payload.generated_at)}`);
             return;
           }
 
-          if (currentMs > lastMs) {
-            const result = await FirestoreService.saveVibrationLog(
-              user.uid,
-              payload,
-              "vibration_real",
-            );
-
+          // Lexical compare works for "YYYY-MM-DDTHH:mm:ss"
+          if (!last || current > last) {
+            const result = await FirestoreService.saveVibrationLog(user.uid, payload, "vibration_real");
             if (result.success) {
-              lastSavedGeneratedAtRef.current = currentMs;
+              lastSavedGeneratedAtRef.current = current;
               setMessage(isFirst ? `Monitoring started (${source}).` : `New vibration log saved (${source}).`);
               onDataSent?.();
             } else {
-              setMessage(`Error: ${result.error}`);
+              setMessage(`Save failed: ${result.error}`);
             }
           } else {
-            setMessage(
-              `Read ${source} JSON (generated_at=${payload.generated_at}) — no newer log found.`,
-            );
+            setMessage(`Read ${source} payload (generated_at=${payload.generated_at}) — no newer log found (last=${last}).`);
           }
         } catch (e: any) {
           setMessage(`Error: ${e?.message ?? String(e)}`);
@@ -196,10 +174,7 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
       };
 
       await tick(true);
-
-      intervalRef.current = setInterval(() => {
-        void tick(false);
-      }, 60 * 1000);
+      intervalRef.current = setInterval(() => void tick(false), DEVICE_POLL_MS);
     } catch (e: any) {
       setMessage(`Error: ${e?.message ?? String(e)}`);
       setIsMonitoring(false);
@@ -267,7 +242,7 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
               {loading
                 ? "Switching data"
                 : useRealSensors
-                ? "Connect to hardware sensors"
+                ? `Reading from Firestore: devices/${DEVICE_ID}`
                 : "Test the app with simulated sensor data"}
             </Text>
 
@@ -308,9 +283,7 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
                     ) : (
                       <>
                         <Text style={styles.simButtonText}>Start Monitoring</Text>
-                        <Text style={styles.simButtonSubtext}>
-                          Save inference JSON to vibration_real
-                        </Text>
+                        <Text style={styles.simButtonSubtext}>Poll devices/{DEVICE_ID} every 30s</Text>
                       </>
                     )}
                   </TouchableOpacity>
@@ -320,7 +293,7 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
                     onPress={stopRealSensorMonitoring}
                   >
                     <Text style={styles.simButtonText}>Stop Monitoring</Text>
-                    <Text style={styles.simButtonSubtext}>End data collection</Text>
+                    <Text style={styles.simButtonSubtext}>Stop polling + stop saving</Text>
                   </TouchableOpacity>
                 )}
               </View>
