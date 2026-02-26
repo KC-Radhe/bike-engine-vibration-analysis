@@ -511,4 +511,25 @@ export class FirestoreService {
       return [];
     }
   }
+
+  /**
+   * Optional: fetch a "live" real-inference payload from Firestore.
+   *
+   * Why:
+   * - Bundled JSON (unseen_inference_output.json) does NOT change at runtime.
+   * - If you want the monitoring loop to pick up changes without stopping/starting,
+   *   write the latest payload into this Firestore doc.
+   *
+   * Path: users/{userId}/real_inference/latest
+   */
+  static async getRealInferenceSource(userId: string): Promise<InferencePayload | null> {
+    try {
+      const ref = doc(db, "users", userId, "real_inference", "latest");
+      const snap = await getDoc(ref);
+      if (!snap.exists()) return null;
+      return snap.data() as unknown as InferencePayload;
+    } catch {
+      return null;
+    }
+  }
 }

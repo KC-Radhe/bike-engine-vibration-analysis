@@ -1,5 +1,5 @@
 import { Cpu, X, Zap } from "lucide-react-native";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -13,7 +13,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { FirestoreService } from "../services/firestoreService";
 import { SensorService } from "../services/sensorServices";
 import type { InferencePayload } from "../types/database";
-import realInference from "../unseen_inference_output.json";
+import bundledRealInference from "../unseen_inference_output.json";
 import { genereateSimulatedData } from "../utils/sensorSimulator";
 
 interface SimulatorButtonProps {
@@ -29,8 +29,64 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
     null | "healthy" | "warning" | "faulty" | "start_monitoring"
   >(null);
   const [message, setMessage] = useState("");
+  const [tickToast, setTickToast] = useState("");
   const [useRealSensors, setUseRealSensors] = useState(true);
   const [isMonitoring, setIsMonitoring] = useState(false);
+
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Always compare against the latest saved value (avoid stale state in setInterval)
+  const lastSavedGeneratedAtRef = useRef<number>(0);
+
+  const showToast = (text: string) => {
+    setTickToast(text);
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = setTimeout(() => setTickToast(""), 3500);
+  };
+
+  const parseGeneratedAtMs = (generatedAt: string | undefined | null): number => {
+    if (!generatedAt) return 0;
+
+    // Normalize formats so Hermes/Android parses consistently.
+    let s = String(generatedAt).trim();
+
+    // Support "YYYY-MM-DD HH:mm:ss" -> "YYYY-MM-DDTHH:mm:ss"
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(s)) {
+      s = s.replace(" ", "T");
+    }
+
+    // If timezone missing, assume UTC.
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(s)) {
+      s = `${s}Z`;
+    }
+
+    const ms = new Date(s).getTime();
+    return Number.isFinite(ms) ? ms : 0;
+  };
+
+  /**
+   * IMPORTANT LIMITATION (and the reason your override didn't work while monitoring):
+   * - A bundled JSON file (like unseen_inference_output.json) DOES NOT change at runtime.
+   * - Editing the file on your computer will not update an already-running app instance
+   *   unless the JS bundle is reloaded (Fast Refresh / Reload).
+   *
+   * Fix implemented here:
+   * - If you create/update this Firestore doc, monitoring will pick it up every minute:
+   *     users/{uid}/real_inference/latest
+   *   (Put the whole payload there, including generated_at)
+   * - If that doc doesn't exist, it falls back to the bundled JSON.
+   */
+  const readRealInferencePayload = async (): Promise<{ payload: InferencePayload; source: "firestore" | "bundle" }> => {
+    if (user) {
+      const live = await FirestoreService.getRealInferenceSource(user.uid);
+      if (live && live.generated_at) {
+        return { payload: live, source: "firestore" };
+      }
+    }
+
+    return { payload: (bundledRealInference as unknown as InferencePayload), source: "bundle" };
+  };
 
   const simulateData = async (condition: "healthy" | "warning" | "faulty") => {
     if (!user) return;
@@ -38,7 +94,6 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
     setMessage("");
 
     try {
-      // Generates data in the SAME shape as the inference JSON payload
       const payload = genereateSimulatedData(condition);
       const colName = "vibration_simulate";
 
@@ -62,7 +117,14 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
     setMessage("");
     setLoading(true);
 
-    // IMPORTANT: keep delete behavior (when toggling back to Real)
+    // Prevent switching sources while monitoring.
+    if (isMonitoring) {
+      setMessage("Stop monitoring before switching data source.");
+      setLoading(false);
+      return;
+    }
+
+    // Keep existing delete simulated data behavior
     if (toReal && user) {
       setMessage("Cleaning up Simulated data...");
       const result = await SensorService.deleteSimulatedData(user.uid);
@@ -81,46 +143,90 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
 
   const startRealSensorMonitoring = async () => {
     if (!user) return;
+    if (intervalRef.current) return;
 
     setActionLoading("start_monitoring");
     setMessage("");
     setIsMonitoring(true);
 
     try {
-      // "Real sensor" mode (for now) reads from the inference JSON bundled in the app.
-      const payload = realInference as unknown as InferencePayload;
+      // Prime last-saved generatedAt from Firestore logs.
+      const latest = await FirestoreService.getLatestVibrationLog(user.uid, "vibration_real");
+      lastSavedGeneratedAtRef.current = parseGeneratedAtMs(latest?.generatedAt ?? null);
 
-      const result = await FirestoreService.saveVibrationLog(
-        user.uid,
-        payload,
-        "vibration_real",
-      );
+      const tick = async (isFirst = false) => {
+        if (!user) return;
 
-      if (result.success) {
-        setMessage("Real sensor data saved to Firestore (vibration_real).");
-        onDataSent?.();
-      } else {
-        setMessage(`Error: ${result.error}`);
-      }
+        showToast("Read a Vibration Log");
+
+        try {
+          const { payload, source } = await readRealInferencePayload();
+          const currentMs = parseGeneratedAtMs(payload.generated_at);
+          const lastMs = lastSavedGeneratedAtRef.current;
+
+          if (!currentMs) {
+            setMessage(
+              `Read ${source} JSON but generated_at is invalid: ${String(payload.generated_at)}`,
+            );
+            return;
+          }
+
+          if (currentMs > lastMs) {
+            const result = await FirestoreService.saveVibrationLog(
+              user.uid,
+              payload,
+              "vibration_real",
+            );
+
+            if (result.success) {
+              lastSavedGeneratedAtRef.current = currentMs;
+              setMessage(isFirst ? `Monitoring started (${source}).` : `New vibration log saved (${source}).`);
+              onDataSent?.();
+            } else {
+              setMessage(`Error: ${result.error}`);
+            }
+          } else {
+            setMessage(
+              `Read ${source} JSON (generated_at=${payload.generated_at}) — no newer log found.`,
+            );
+          }
+        } catch (e: any) {
+          setMessage(`Error: ${e?.message ?? String(e)}`);
+        }
+      };
+
+      await tick(true);
+
+      intervalRef.current = setInterval(() => {
+        void tick(false);
+      }, 60 * 1000);
     } catch (e: any) {
       setMessage(`Error: ${e?.message ?? String(e)}`);
+      setIsMonitoring(false);
     } finally {
       setActionLoading(null);
-      setIsMonitoring(false);
     }
   };
 
   const stopRealSensorMonitoring = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
     setIsMonitoring(false);
     setMessage("Monitoring stopped.");
   };
 
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    };
+  }, []);
+
   return (
     <>
-      <TouchableOpacity
-        style={styles.floatingButton}
-        onPress={() => setModalVisible(true)}
-      >
+      <TouchableOpacity style={styles.floatingButton} onPress={() => setModalVisible(true)}>
         <Zap size={24} color="#fff" strokeWidth={2} />
       </TouchableOpacity>
 
@@ -134,28 +240,27 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Sensor Simulator</Text>
-              <TouchableOpacity
-                onPress={() => setModalVisible(false)}
-                style={styles.closeButton}
-              >
+              <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeButton}>
                 <X size={24} color="#64748b" strokeWidth={2} />
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.modalSubtitle}>
-              Test the app with simulated sensor data
-            </Text>
+            <Text style={styles.modalSubtitle}>Test the app with simulated sensor data</Text>
 
             <View style={styles.toggleContainer}>
               <Cpu size={20} color="#64748b" strokeWidth={2} />
               <Text style={styles.toggleLabel}>Use Real Sensors</Text>
-              <Switch
-                value={useRealSensors}
-                onValueChange={handleToggle}
-                trackColor={{ false: "#cbd5e1", true: "#2563eb" }}
-                thumbColor={useRealSensors ? "#fff" : "#f1f5f9"}
-                disabled={loading || actionLoading !== null}
-              />
+              {useRealSensors && isMonitoring ? (
+                <Text style={styles.lockedToggleText}>Locked</Text>
+              ) : (
+                <Switch
+                  value={useRealSensors}
+                  onValueChange={handleToggle}
+                  trackColor={{ false: "#cbd5e1", true: "#2563eb" }}
+                  thumbColor={useRealSensors ? "#fff" : "#f1f5f9"}
+                  disabled={loading || actionLoading !== null}
+                />
+              )}
             </View>
 
             <Text style={styles.modalSubtitle}>
@@ -172,13 +277,17 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
               </View>
             ) : null}
 
+            {tickToast ? (
+              <View style={styles.toastContainer}>
+                <Text style={styles.toastText}>{tickToast}</Text>
+              </View>
+            ) : null}
+
             {loading && (
               <View style={styles.transitionLoading}>
                 <ActivityIndicator color="#2563eb" size="large" />
                 <Text style={styles.transitionText}>
-                  {useRealSensors
-                    ? "Loading real sensor data..."
-                    : "Loading simulated data..."}
+                  {useRealSensors ? "Loading real sensor data..." : "Loading simulated data..."}
                 </Text>
               </View>
             )}
@@ -237,6 +346,7 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
                       </>
                     )}
                   </TouchableOpacity>
+
                   <TouchableOpacity
                     style={[styles.simButton, styles.warningButton]}
                     onPress={() => simulateData("warning")}
@@ -254,6 +364,7 @@ export function SimulatorButton({ onDataSent, onToggleChange }: SimulatorButtonP
                       </>
                     )}
                   </TouchableOpacity>
+
                   <TouchableOpacity
                     style={[styles.simButton, styles.faultyButon]}
                     onPress={() => simulateData("faulty")}
@@ -351,6 +462,15 @@ const styles = StyleSheet.create({
     color: "#1e293b",
     marginLeft: 10,
   },
+  lockedToggleText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#64748b",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "#e2e8f0",
+  },
   messageContainer: {
     backgroundColor: "#f1f5f9",
     padding: 12,
@@ -361,6 +481,19 @@ const styles = StyleSheet.create({
     color: "#334155",
     fontSize: 14,
     textAlign: "center",
+  },
+  toastContainer: {
+    backgroundColor: "#0f172a",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    marginBottom: 15,
+  },
+  toastText: {
+    color: "#fff",
+    fontSize: 13,
+    textAlign: "center",
+    fontWeight: "600",
   },
   transitionLoading: {
     alignItems: "center",

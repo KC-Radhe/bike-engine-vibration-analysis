@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-02-22T02:51:08",
+  "generated_at": "2026-02-27T05:50:08",
   "model_path": "C:\\Users\\Lenovo\\Downloads\\vibration\\runs\\bike_lstm\\20260222_022851\\best_model.pt",
   "unseen_csv": "C:\\Users\\Lenovo\\Downloads\\vibration\\unseen_data.csv",
   "overall": {
     "rows": 1283,
     "vibration_stats": {
-      "mean": 1.042595624923706,
+      "mean": 1.06042595624923706,
       "min": 0.8899999856948853,
       "max": 1.2380000352859497
     },
