@@ -263,6 +263,7 @@ export function TrendChart({
               yAxisThickness={0}
               yAxisTextStyle={{ color: "transparent", width: 0 }}
               yAxisLabelSuffix={yAxisLabelSuffix ?? ""}
+              hideRules
             />
           </ScrollView>
         </View>

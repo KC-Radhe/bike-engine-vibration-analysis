@@ -36,7 +36,6 @@ export default function DashboardScreen() {
   const [latestLog, setLatestLog] = useState<VibrationLog | null>(null);
   const [recentLogs, setRecentLogs] = useState<VibrationLog[]>([]);
   const [faultProbSeries, setFaultProbSeries] = useState<number[]>([]);
-  const [vibrationMeanSeries, setVibrationMeanSeries] = useState<number[]>([]);
   const { setUseSimulated, collectionName } = useCollection();
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -60,25 +59,15 @@ export default function DashboardScreen() {
 
       // Trend series from windows subcollection (only for inference JSON logs)
       if (log && log.meanFaultyProbability !== undefined) {
-        const [fp, vm] = await Promise.all([
-          FirestoreService.getRandomWindowSeriesForLatestLog(
-            user.uid,
-            collectionName,
-            "faultyProbability",
-            20,
-          ),
-          FirestoreService.getRandomWindowSeriesForLatestLog(
-            user.uid,
-            collectionName,
-            "vibrationMean",
-            20,
-          ),
-        ]);
+        const fp = await FirestoreService.getRandomWindowSeriesForLatestLog(
+          user.uid,
+          collectionName,
+          "faultyProbability",
+          20,
+        );
         setFaultProbSeries(fp);
-        setVibrationMeanSeries(vm);
       } else {
         setFaultProbSeries([]);
-        setVibrationMeanSeries([]);
       }
     } catch (error) {
       console.error("Error loading dashboad data: ", error);
@@ -293,7 +282,7 @@ export default function DashboardScreen() {
                     <Text style={styles.metricLabel}>Vibration Mean</Text>
                     <Text style={styles.metricValue}>
                       {(
-                        (latestLog.overallVibrationMean ?? latestLog.magnitude)
+                        latestLog.overallVibrationMean ?? latestLog.magnitude
                       ).toFixed(3)}
                       g
                     </Text>
@@ -427,19 +416,6 @@ export default function DashboardScreen() {
               mean={latestLog.meanFaultyProbability}
               min={latestLog.minFaultyProbability}
               max={latestLog.maxFaultyProbability}
-            />
-          )}
-
-        {latestLog?.meanFaultyProbability !== undefined &&
-          vibrationMeanSeries.length > 0 && (
-            <TrendChart
-              title="Vibration Magnitude Trend"
-              unit="g"
-              color="#2563eb"
-              values={vibrationMeanSeries}
-              mean={latestLog.overallVibrationMean}
-              min={latestLog.overallVibrationMin}
-              max={latestLog.overallVibrationMax}
             />
           )}
       </ScrollView>
